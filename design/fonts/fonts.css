@@ -1,0 +1,44 @@
+/* Pretendard — the official Wanted Lab typeface. Multi-script (Hangul, Latin, CJK).
+   Loading priority per weight: variable woff2 → static woff → static otf.
+   Registered under both "Pretendard JP" (the name in the Figma source) and
+   "Pretendard" so either family resolves correctly. */
+
+/* Variable — preferred, single download for the full weight axis */
+@font-face {
+  font-family: "Pretendard JP";
+  font-weight: 100 900;
+  font-style: normal;
+  src: url("./PretendardVariable.woff2") format("woff2-variations"),
+       url("./Pretendard-Regular.woff") format("woff"),
+       url("./Pretendard-Regular.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 100 900;
+  font-style: normal;
+  src: url("./PretendardVariable.woff2") format("woff2-variations"),
+       url("./Pretendard-Regular.woff") format("woff"),
+       url("./Pretendard-Regular.otf") format("opentype");
+  font-display: swap;
+}
+
+/* Per-weight static fallbacks */
+@font-face { font-family: "Pretendard"; font-weight: 100; src: url("./Pretendard-Thin.woff")        format("woff"), url("./Pretendard-Thin.otf")        format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 200; src: url("./Pretendard-ExtraLight.woff")  format("woff"), url("./Pretendard-ExtraLight.otf")  format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 300; src: url("./Pretendard-Light.woff")       format("woff"), url("./Pretendard-Light.otf")       format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 400; src: url("./Pretendard-Regular.woff")     format("woff"), url("./Pretendard-Regular.otf")     format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 500; src: url("./Pretendard-Medium.woff")      format("woff"), url("./Pretendard-Medium.otf")      format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 600; src: url("./Pretendard-SemiBold.woff")    format("woff"), url("./Pretendard-SemiBold.otf")    format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 700; src: url("./Pretendard-Bold.woff")        format("woff"), url("./Pretendard-Bold.otf")        format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 800; src: url("./Pretendard-ExtraBold.woff")   format("woff"), url("./Pretendard-ExtraBold.otf")   format("opentype"); font-display: swap; }
+@font-face { font-family: "Pretendard"; font-weight: 900; src: url("./Pretendard-Black.woff")       format("woff"), url("./Pretendard-Black.otf")       format("opentype"); font-display: swap; }
+
+/* Wanted Sans — used sparingly for huge display moments. Local TTF static files. */
+@font-face { font-family: "Wanted Sans"; font-weight: 400; src: url("./WantedSans-Regular.ttf")    format("truetype"); font-display: swap; }
+@font-face { font-family: "Wanted Sans"; font-weight: 500; src: url("./WantedSans-Medium.ttf")     format("truetype"); font-display: swap; }
+@font-face { font-family: "Wanted Sans"; font-weight: 600; src: url("./WantedSans-SemiBold.ttf")   format("truetype"); font-display: swap; }
+@font-face { font-family: "Wanted Sans"; font-weight: 700; src: url("./WantedSans-Bold.ttf")       format("truetype"); font-display: swap; }
+@font-face { font-family: "Wanted Sans"; font-weight: 800; src: url("./WantedSans-ExtraBold.ttf")  format("truetype"); font-display: swap; }
+@font-face { font-family: "Wanted Sans"; font-weight: 900; src: url("./WantedSans-Black.ttf")      format("truetype"); font-display: swap; }
+@font-face { font-family: "Wanted Sans"; font-weight: 950; src: url("./WantedSans-ExtraBlack.ttf") format("truetype"); font-display: swap; }

@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="card.css">
+<style>
+.sw{position:relative;display:inline-block;width:44px;height:24px;border-radius:9999px;background:rgba(112,115,124,0.22);transition:background .15s;cursor:pointer}
+.sw .thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15);transition:left .15s}
+.sw.on{background:#0066FF}
+.sw.on .thumb{left:22px}
+.cb{width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(112,115,124,0.5);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.cb.checked{background:#0066FF;border-color:#0066FF}
+.cb.checked::after{content:"";width:10px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.rd{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(112,115,124,0.5);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.rd.checked{border-color:#0066FF;border-width:6px}
+.lab{font-size:14px;font-weight:600;color:rgba(46,47,51,0.88)}
+</style></head>
+<body><div class="card">
+  <div class="cap">SWITCHES · CHECKBOXES · RADIOS</div>
+  <div class="row" style="gap:24px;align-items:center">
+    <div class="row" style="gap:8px"><span class="sw"><span class="thumb"></span></span><span class="lab">알림 끄기</span></div>
+    <div class="row" style="gap:8px"><span class="sw on"><span class="thumb"></span></span><span class="lab">알림 켜기</span></div>
+  </div>
+  <div class="row" style="gap:24px;align-items:center">
+    <div class="row" style="gap:8px"><span class="cb"></span><span class="lab">신입</span></div>
+    <div class="row" style="gap:8px"><span class="cb checked"></span><span class="lab">3년+</span></div>
+    <div class="row" style="gap:8px"><span class="cb"></span><span class="lab">5년+</span></div>
+    <div class="row" style="gap:8px"><span class="cb checked"></span><span class="lab">10년+</span></div>
+  </div>
+  <div class="row" style="gap:24px;align-items:center">
+    <div class="row" style="gap:8px"><span class="rd"></span><span class="lab">정규직</span></div>
+    <div class="row" style="gap:8px"><span class="rd checked"></span><span class="lab">계약직</span></div>
+    <div class="row" style="gap:8px"><span class="rd"></span><span class="lab">인턴</span></div>
+    <div class="row" style="gap:8px"><span class="rd"></span><span class="lab">파견직</span></div>
+  </div>
+</div></body></html>

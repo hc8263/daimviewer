@@ -1,0 +1,157 @@
+// TopNav — Wanted's product top bar
+const TopNavStyles = {
+  bar: {
+    height: 50,
+    borderBottom: "1px solid var(--color-line-normal-normal)",
+    background: "#fff",
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
+  },
+  inner: {
+    display: "flex",
+    alignItems: "center",
+    gap: 32,
+    height: "100%",
+  },
+  logo: {
+    color: "#0066FF",
+    display: "flex",
+    alignItems: "center",
+    height: 24,
+    marginRight: 8,
+  },
+  nav: {
+    display: "flex",
+    gap: 22,
+    flex: 1,
+    alignItems: "center",
+  },
+  link: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "rgba(46,47,51,0.88)",
+    height: 50,
+    display: "flex",
+    alignItems: "center",
+    cursor: "pointer",
+    position: "relative",
+    whiteSpace: "nowrap",
+  },
+  linkActive: {
+    color: "#000",
+  },
+  linkActiveDot: {
+    position: "absolute",
+    bottom: 0,
+    left: 0, right: 0,
+    height: 3,
+    background: "#000",
+    borderRadius: "2px 2px 0 0",
+  },
+  badge: {
+    background: "#FF4242",
+    color: "#fff",
+    borderRadius: 9999,
+    fontSize: 10,
+    fontWeight: 700,
+    padding: "1px 5px",
+    marginLeft: 4,
+    transform: "translateY(-4px)",
+  },
+  right: { display: "flex", gap: 14, alignItems: "center" },
+  iconBtn: {
+    width: 36, height: 36, borderRadius: 8,
+    background: "transparent", border: "none",
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    color: "rgba(46,47,51,0.88)",
+  },
+  signIn: {
+    background: "transparent",
+    border: "1px solid transparent",
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#000",
+    padding: "8px 12px",
+    borderRadius: 8,
+    whiteSpace: "nowrap",
+  },
+  post: {
+    background: "#0066FF",
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: 700,
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: 8,
+    whiteSpace: "nowrap",
+  },
+  avatar: {
+    width: 32, height: 32, borderRadius: 9999,
+    background: "#EAF2FE",
+    color: "#005EEB",
+    fontSize: 13, fontWeight: 700,
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    border: "none",
+    cursor: "pointer",
+  },
+};
+
+function WantedLogo({ width = 110 }) {
+  // Compact horizontal lockup using the actual SVG paths
+  return (
+    <svg width={width} viewBox="0 0 4692 869" fill="currentColor" style={{ display: "block" }}>
+      <path d="M 442 869 C 477 869 508 841 508 797 L 508 457 L 413 457 L 413 716 C 413 724 406 726 401 721 L 147 470 C 141 463 144 457 153 457 L 781 457 L 781 362 L 73 362 C 28 362 0 393 0 429 C 0 446 7 464 24 481 L 389 846 C 405 863 424 869 442 869 Z M 1026 853 C 1161 853 1272 742 1272 607 C 1272 472 1161 362 1026 362 L 876 362 L 876 457 L 1026 457 C 1107 457 1177 523 1177 607 C 1177 691 1108 758 1026 758 C 944 758 876 689 876 607 L 876 82 C 876 35 840 0 794 0 L 496 0 C 448 0 413 36 413 83 L 413 362 L 508 362 L 508 106 C 508 100 512 95 518 95 L 770 95 C 776 95 781 100 781 106 L 781 607 C 781 742 891 853 1026 853 Z" />
+      <g transform="translate(1414, 70)">
+        <path d="M 2964 730 C 3027 730 3080 703 3109 661 L 3109 720 L 3213 720 L 3213 0 L 3109 0 L 3109 274 C 3080 235 3026 210 2963 210 C 2818 210 2707 327 2707 470 C 2707 613 2819 730 2964 730 Z M 2964 630 C 2879 630 2809 557 2809 470 C 2809 383 2879 310 2964 310 C 3049 310 3119 383 3119 470 C 3119 557 3049 630 2964 630 Z M 2269 428 C 2273 364 2336 303 2414 303 C 2492 303 2551 364 2555 428 L 2269 428 Z M 2423 730 C 2524 730 2612 672 2648 592 L 2565 564 C 2541 607 2485 637 2424 637 C 2336 637 2273 583 2269 510 L 2654 510 C 2674 342 2573 210 2423 210 C 2273 210 2167 317 2167 470 C 2167 623 2272 730 2423 730 Z M 2050 729 C 2081 729 2112 722 2132 711 L 2132 620 C 2108 632 2087 637 2073 637 C 2033 637 2013 613 2013 564 L 2013 302 L 2132 302 L 2132 220 L 2013 220 L 2013 120 L 1909 120 L 1909 220 L 1829 220 L 1829 302 L 1909 302 L 1909 568 C 1909 669 1961 729 2050 729 Z M 1337 720 L 1441 720 L 1441 436 C 1441 349 1490 300 1561 300 C 1632 300 1680 349 1680 436 L 1680 720 L 1784 720 L 1784 430 C 1784 289 1719 210 1593 210 C 1526 210 1466 237 1441 284 L 1441 220 L 1337 220 L 1337 720 Z M 998 630 C 913 630 843 557 843 470 C 843 383 913 310 998 310 C 1083 310 1153 383 1153 470 C 1153 557 1083 630 998 630 Z M 998 730 C 1061 730 1114 703 1143 661 L 1143 720 L 1247 720 L 1247 220 L 1143 220 L 1143 274 C 1114 235 1060 210 997 210 C 852 210 741 327 741 470 C 741 613 853 730 998 730 Z M 176 720 L 275 720 L 368 440 L 461 720 L 560 720 L 736 220 L 627 220 L 512 572 L 407 220 L 329 220 L 224 572 L 109 220 L 0 220 L 176 720 Z" />
+      </g>
+    </svg>
+  );
+}
+
+function TopNav({ route, setRoute, signedIn, setSignedIn, onOpenProfile }) {
+  const links = [
+    { id: "home",       label: "채용",   active: route === "home" || route === "detail" },
+    { id: "rewards",    label: "이벤트", badge: "N" },
+    { id: "matchup",    label: "매치업" },
+    { id: "agent",      label: "Agent" },
+    { id: "events",     label: "원티드 LIVE" },
+    { id: "salary",     label: "연봉" },
+    { id: "career",     label: "커리어" },
+  ];
+  return (
+    <header style={TopNavStyles.bar}>
+      <div className="wide-container" style={TopNavStyles.inner}>
+        <a onClick={() => setRoute("home")} style={TopNavStyles.logo}>
+          <WantedLogo width={86} />
+        </a>
+        <nav style={TopNavStyles.nav}>
+          {links.map(l => (
+            <a key={l.id}
+               onClick={() => setRoute(l.id === "home" ? "home" : "home")}
+               style={{...TopNavStyles.link, ...(l.active ? TopNavStyles.linkActive : {})}}>
+              {l.label}
+              {l.badge && <span style={TopNavStyles.badge}>{l.badge}</span>}
+              {l.active && <span style={TopNavStyles.linkActiveDot} />}
+            </a>
+          ))}
+        </nav>
+        <div style={TopNavStyles.right}>
+          <button style={TopNavStyles.iconBtn} title="검색"><IC.Search size={20}/></button>
+          {signedIn && <button style={TopNavStyles.iconBtn} title="알림"><IC.Bell size={20}/></button>}
+          {signedIn && <button style={TopNavStyles.iconBtn} title="저장"><IC.Bookmark size={20}/></button>}
+          {!signedIn && (
+            <button style={TopNavStyles.signIn} onClick={() => setSignedIn(true)}>회원가입 / 로그인</button>
+          )}
+          {signedIn && (
+            <button style={TopNavStyles.avatar} onClick={onOpenProfile} title="내 프로필">HK</button>
+          )}
+          <button style={TopNavStyles.post}>기업 서비스</button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+window.TopNav = TopNav;
+window.WantedLogo = WantedLogo;

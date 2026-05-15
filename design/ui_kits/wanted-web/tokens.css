@@ -1,0 +1,30 @@
+@import url("../../colors_and_type.css");
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg-normal-alternative);
+  font-family: var(--font-family-base);
+  color: var(--color-label-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+
+/* The product viewport — Wanted's chrome targets ~1280px content + gutters */
+.app {
+  min-height: 100%;
+  background: var(--color-bg-normal-normal);
+}
+.container {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.wide-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}

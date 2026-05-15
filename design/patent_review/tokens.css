@@ -1,0 +1,190 @@
+@import url("../colors_and_type.css");
+
+/* Patent Review — neutral skin override
+   - Brand blue (#0066FF) is reserved for: primary CTAs, active states, the user's own
+     chat bubble, links, focus rings. Nothing else.
+   - The product chrome is white / cool-neutral-99 / cool-neutral-98.
+   - Text leans almost-black for emphasis, cool-neutral for everything else.
+   - Hairlines and selection states use translucent cool-neutrals.
+   - Status colors stay (positive/cautionary/negative) but desaturated.
+*/
+
+:root {
+  /* Override the surface tone of the product to be more "tool-like" */
+  --pr-bg:           #FAFAFB;             /* page background — a hair greyer than pure white */
+  --pr-surface:      #FFFFFF;             /* cards, table rows on hover */
+  --pr-surface-alt:  #F7F7F8;             /* hover, zebra */
+  --pr-border:       rgba(112,115,124,0.18);
+  --pr-border-strong: rgba(112,115,124,0.32);
+  --pr-divider:      rgba(112,115,124,0.10);
+
+  --pr-fg-strong: #000000;
+  --pr-fg:        rgba(46,47,51,0.88);
+  --pr-fg-muted:  rgba(55,56,60,0.61);
+  --pr-fg-faint:  rgba(55,56,60,0.43);
+
+  --pr-action:    #0066FF;  /* still the brand blue — used sparingly */
+  --pr-action-bg: #EAF2FE;
+}
+
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--pr-bg);
+  color: var(--pr-fg);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+
+/* App chrome */
+.pr-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.pr-topbar {
+  height: 52px;
+  background: #fff;
+  border-bottom: 1px solid var(--pr-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.pr-topbar .brand {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 700; color: var(--pr-fg-strong);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+.pr-topbar .brand-mark {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: #000; color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 4px;
+}
+.pr-topbar .crumbs {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--pr-fg-muted); font-weight: 500;
+  white-space: nowrap;
+}
+.pr-topbar .crumbs .sep { color: var(--pr-fg-faint); }
+.pr-topbar .crumbs .cur { color: var(--pr-fg-strong); font-weight: 600; }
+
+.pr-topbar .spacer { flex: 1; }
+
+.pr-search {
+  position: relative;
+  width: 320px;
+}
+.pr-search input {
+  width: 100%; height: 32px; border-radius: 8px;
+  border: 1px solid var(--pr-border);
+  background: var(--pr-surface-alt);
+  padding: 0 12px 0 32px;
+  font-size: 13px; color: var(--pr-fg);
+  outline: none;
+  font-family: inherit;
+}
+.pr-search input::placeholder { color: var(--pr-fg-faint); }
+.pr-search input:focus {
+  background: #fff; border-color: var(--pr-action);
+  box-shadow: 0 0 0 3px rgba(0,102,255,0.12);
+}
+.pr-search svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--pr-fg-muted);
+}
+.pr-search kbd {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-family-mono); font-size: 10px;
+  background: #fff; border: 1px solid var(--pr-border);
+  border-radius: 4px; padding: 1px 5px; color: var(--pr-fg-muted);
+}
+
+.pr-iconbtn {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: transparent; border: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--pr-fg-muted);
+  transition: background .12s;
+}
+.pr-iconbtn:hover { background: var(--pr-surface-alt); color: var(--pr-fg); }
+
+.pr-userchip {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 32px; padding: 0 10px 0 4px; border-radius: 9999px;
+  background: var(--pr-surface-alt);
+  font-size: 12px; font-weight: 600; color: var(--pr-fg);
+  border: 1px solid var(--pr-border);
+}
+.pr-userchip .av {
+  width: 24px; height: 24px; border-radius: 9999px;
+  background: #000; color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+
+/* Buttons */
+.pr-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.pr-btn-default {
+  background: #fff;
+  border-color: var(--pr-border);
+  color: var(--pr-fg);
+}
+.pr-btn-default:hover { background: var(--pr-surface-alt); }
+.pr-btn-primary {
+  background: var(--pr-action);
+  color: #fff;
+}
+.pr-btn-primary:hover { background: #005EEB; }
+.pr-btn-ghost {
+  background: transparent;
+  color: var(--pr-fg);
+}
+.pr-btn-ghost:hover { background: var(--pr-surface-alt); }
+.pr-btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.pr-btn-lg { height: 40px; padding: 0 16px; font-size: 14px; }
+
+/* Status pill (used in tables) */
+.pr-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 8px; border-radius: 9999px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.pr-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Tag (faint outline) */
+.pr-tag {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 6px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+  background: var(--pr-surface-alt); color: var(--pr-fg);
+  border: 1px solid var(--pr-divider);
+  white-space: nowrap;
+}
+.pr-tag-blue { background: #EAF2FE; color: #005EEB; border-color: transparent; }
+
+/* Mono */
+.mono {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+}

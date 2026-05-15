@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="card.css">
+<style>
+.badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-family-base);font-weight:600;font-size:12px;line-height:1;padding:4px 8px;border-radius:6px}
+.badge-pill{padding:4px 10px;border-radius:9999px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-family-base);font-weight:600;font-size:14px;height:32px;padding:0 12px;border-radius:9999px;border:1px solid rgba(112,115,124,0.22);background:#fff;color:rgba(46,47,51,0.88)}
+.chip.active{background:#0066FF;color:#fff;border-color:#0066FF}
+</style></head>
+<body><div class="card">
+  <div class="cap">BADGES + CHIPS</div>
+  <div class="row" style="gap:6px;flex-wrap:wrap">
+    <span class="badge" style="background:#EAF2FE;color:#0054D1">신입</span>
+    <span class="badge" style="background:#F2FFF6;color:#006E25">채용중</span>
+    <span class="badge" style="background:#FEECEC;color:#B20C0C">마감임박</span>
+    <span class="badge" style="background:#FEF4E6;color:#9C5800">상시채용</span>
+    <span class="badge" style="background:rgba(46,47,51,0.06);color:rgba(46,47,51,0.88)">정규직</span>
+    <span class="badge badge-pill" style="background:#0066FF;color:#fff">NEW</span>
+    <span class="badge badge-pill" style="background:#FF4242;color:#fff">HOT</span>
+    <span class="badge badge-pill" style="background:#000;color:#fff">PICK</span>
+  </div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px">
+    <span class="chip active">전체</span>
+    <span class="chip">개발</span>
+    <span class="chip">디자인</span>
+    <span class="chip">마케팅·광고</span>
+    <span class="chip">데이터</span>
+    <span class="chip">+ 더보기</span>
+  </div>
+</div></body></html>

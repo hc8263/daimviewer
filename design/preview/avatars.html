@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="card.css">
+<style>
+.av{border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;background:#EAEBEC;color:rgba(46,47,51,0.61);font-weight:700;font-family:var(--font-family-base);overflow:hidden}
+.av-xs{width:24px;height:24px;font-size:11px}
+.av-sm{width:32px;height:32px;font-size:13px}
+.av-md{width:40px;height:40px;font-size:14px}
+.av-lg{width:56px;height:56px;font-size:18px}
+.av-xl{width:72px;height:72px;font-size:24px}
+.av-blue{background:#EAF2FE;color:#005EEB}
+.av-green{background:#D9FFE6;color:#006E25}
+.av-violet{background:#F0ECFE;color:#4F29E5}
+.av-orange{background:#FEF4E6;color:#9C5800}
+.dot{width:10px;height:10px;border-radius:50%;background:#00BF40;border:2px solid #fff;margin-left:-12px;align-self:flex-end;position:relative;bottom:2px}
+.stack{display:inline-flex}
+.stack > * {margin-left:-8px;border:2px solid #fff;box-sizing:border-box}
+.stack > *:first-child{margin-left:0}
+</style></head>
+<body><div class="card">
+  <div class="cap">AVATARS — sizes XS · S · M · L · XL + stack + dot</div>
+  <div class="row" style="gap:16px;align-items:flex-end">
+    <span class="av av-xs av-blue">HK</span>
+    <span class="av av-sm av-green">CO</span>
+    <span class="av av-md av-violet">DK</span>
+    <span class="av av-lg av-orange">SY</span>
+    <span class="av av-xl">KP</span>
+  </div>
+  <div class="row" style="gap:24px;margin-top:6px;align-items:center">
+    <div style="position:relative;display:inline-block">
+      <span class="av av-lg av-blue">HK</span>
+      <span style="position:absolute;right:0;bottom:0;width:14px;height:14px;border-radius:50%;background:#00BF40;border:3px solid #fff"></span>
+    </div>
+    <div class="stack">
+      <span class="av av-md av-blue">HK</span>
+      <span class="av av-md av-green">CO</span>
+      <span class="av av-md av-violet">DK</span>
+      <span class="av av-md av-orange">SY</span>
+      <span class="av av-md" style="background:#0066FF;color:#fff">+5</span>
+    </div>
+  </div>
+</div></body></html>
