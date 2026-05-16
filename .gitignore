@@ -3,7 +3,8 @@ node_modules/
 .next/
 .vercel/
 .env*.local
-data/descriptions/
-data/summaries/
-data/needs_ocr.txt
-data/unmatched.csv
+data/
+datas/
+list/
+__pycache__/
+*.pyc

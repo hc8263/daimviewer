@@ -20,9 +20,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5"
+    "tsx": "^4.21.1",
+    "typescript": "^5",
+    "xlsx": "^0.18.5"
   },
   "pnpm": {
-    "ignoredBuiltDependencies": ["sharp"]
+    "ignoredBuiltDependencies": [
+      "sharp"
+    ]
   }
 }
