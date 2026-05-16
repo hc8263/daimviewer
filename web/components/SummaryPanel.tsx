@@ -28,9 +28,6 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
       <div className="dp-cnt-header">
         <div className="row">
           <h1 className="h1">{patent.fileTitle}</h1>
-          <a href={patent.sourceUrl} target="_blank" rel="noreferrer" className="pr-btn pr-btn-default pr-btn-sm" style={{ flexShrink: 0 }}>
-            <PRIcon name="ExternalLink" size={13} />원문 보기
-          </a>
         </div>
         <div className="row" style={{ gap: 16 }}>
           <span className="id">{patent.wipsonKey}</span>
@@ -71,11 +68,7 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
               : "요약 준비 중 — 명세서 기반 요약이 채워지면 이 영역에 표시됩니다"}
           </div>
           <div className="md">{renderMarkdown(summaryMd)}</div>
-          <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--pr-divider)", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <a href={patent.sourceUrl} target="_blank" rel="noreferrer" className="pr-btn pr-btn-default pr-btn-sm">
-              <PRIcon name="ExternalLink" size={13} />KIPRIS / 원문
-            </a>
-            <span style={{ flex: 1 }} />
+          <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--pr-divider)", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
             <span style={{ fontSize: 11, color: "var(--pr-fg-faint)" }}>
               AI 요약은 보조용입니다. 결정 전에 원문을 확인하세요.
             </span>
