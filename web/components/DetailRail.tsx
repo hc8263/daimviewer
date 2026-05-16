@@ -12,10 +12,19 @@ export function DetailRail({ active, patents, width = 260 }: {
 }) {
   const router = useRouter();
   const [filter, setFilter] = React.useState<"all" | "unreviewed" | "relevant" | "maybe" | "irrelevant">("all");
+  const [query, setQuery] = React.useState("");
 
   let list = patents;
   if (filter === "unreviewed") list = patents.filter((p) => !p.reviewStatus);
   else if (filter !== "all") list = patents.filter((p) => p.reviewStatus === filter);
+  const q = query.trim().toLowerCase();
+  if (q) {
+    list = list.filter((p) =>
+      (p.fileTitle || "").toLowerCase().includes(q) ||
+      (p.titleKo || "").toLowerCase().includes(q) ||
+      (p.wipsonKey || "").toLowerCase().includes(q)
+    );
+  }
   const reviewed = patents.filter((p) => p.reviewStatus).length;
 
   React.useEffect(() => {
@@ -37,6 +46,18 @@ export function DetailRail({ active, patents, width = 260 }: {
           <span style={{ fontVariantNumeric: "tabular-nums" }}>{patents.length ? Math.round((reviewed / patents.length) * 100) : 0}%</span>
         </div>
       </div>
+      <div className="dp-rail-search">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="제목으로 검색…"
+          aria-label="특허 제목 검색"
+        />
+        {query && (
+          <button type="button" className="dp-rail-search-clear" onClick={() => setQuery("")} aria-label="검색어 지우기">×</button>
+        )}
+      </div>
       <div className="dp-rail-filters">
         {(["all", "unreviewed", "relevant", "maybe", "irrelevant"] as const).map((k) => (
           <button key={k} className={`f ${filter === k ? "on" : ""}`} onClick={() => setFilter(k)}>
@@ -45,6 +66,9 @@ export function DetailRail({ active, patents, width = 260 }: {
         ))}
       </div>
       <div className="dp-rail-list">
+        {list.length === 0 && (
+          <div className="dp-rail-empty">검색 결과 없음</div>
+        )}
         {list.map((p) => (
           <div
             key={p.wipsonKey}
