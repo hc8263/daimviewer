@@ -54,8 +54,15 @@ function rowToView(r: PatentRow & { decision?: string | null; reviewer?: string 
 export async function listPatents(): Promise<PatentView[]> {
   if (!hasDb || !sql) return MOCK_PATENTS;
   try {
+    // List view never reads description/summary_md — skip those big columns
+    // (14MB total across ~730 rows) so the page payload stays small.
     const rows = (await sql`
-      select p.*, null::text as decision, null::text as reviewer, null::text as review_date
+      select p.wipson_key, p.country, p.title, p.title_ko,
+             p.application_no, p.application_date, p.publication_no,
+             p.registration_no, p.applicants, p.inventors,
+             p.ipc_main, p.status, p.source_url, p.pdf_url,
+             null::text as description, null::text as summary_md,
+             null::text as decision, null::text as reviewer, null::text as review_date
         from patents p
         order by p.application_date desc nulls last
     `) as unknown as (PatentRow & { decision: string | null; reviewer: string | null; review_date: string | null })[];
