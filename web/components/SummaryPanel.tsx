@@ -28,6 +28,9 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
       <div className="dp-cnt-header">
         <div className="row">
           <h1 className="h1">{patent.fileTitle}</h1>
+          <a href={patent.sourceUrl} target="_blank" rel="noreferrer" className="pr-btn pr-btn-default pr-btn-sm" style={{ flexShrink: 0 }}>
+            <PRIcon name="ExternalLink" size={13} />원문 보기
+          </a>
         </div>
         <div className="row" style={{ gap: 16 }}>
           <span className="id">{patent.wipsonKey}</span>
