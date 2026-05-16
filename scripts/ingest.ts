@@ -10,7 +10,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as XLSX from "xlsx";
-import { sql, hasDb, type PatentRow } from "../web/lib/db";
+import { Pool } from "@neondatabase/serverless";
+import { hasDb, type PatentRow } from "../web/lib/db";
 
 const ROOT = "/Users/vincentlim/coding/dmpat_patent_anal";
 const XLSX_PATH = path.join(ROOT, "list/datas_list.xlsx");
@@ -376,61 +377,71 @@ async function main() {
     return;
   }
 
-  // upsert
+  // upsert (Pool/WebSocket - HTTP sql driver는 ~1MB 본문에서 connection closed 발생)
   console.log("\n→ DATABASE_URL 설정됨, upsert 시작...");
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const client = await pool.connect();
   let upserted = 0;
-  for (const r of matchedRows) {
-    const row: PatentRow & { pdf_filename: string | null } = {
-      wipson_key: r.wipson_key,
-      country: r.country,
-      title: r.title,
-      title_ko: r.title_ko,
-      application_no: r.application_no,
-      application_date: r.application_date,
-      publication_no: r.publication_no,
-      registration_no: r.registration_no,
-      applicants: r.applicants,
-      inventors: r.inventors,
-      ipc_main: r.ipc_main,
-      status: r.status,
-      description: r.description,
-      summary_md: null,
-      source_url: r.source_url,
-      pdf_url: r.pdf_url,
-      pdf_filename: r.pdf_filename,
-    };
-    await sql!`
-      insert into patents (
-        wipson_key, pdf_filename, country, title, title_ko,
-        application_no, application_date, publication_no, registration_no,
-        applicants, inventors, ipc_main, status,
-        description, summary_md, source_url, pdf_url, updated_at
-      ) values (
-        ${row.wipson_key}, ${row.pdf_filename}, ${row.country}, ${row.title}, ${row.title_ko},
-        ${row.application_no}, ${row.application_date}, ${row.publication_no}, ${row.registration_no},
-        ${row.applicants}, ${row.inventors}, ${row.ipc_main}, ${row.status},
-        ${row.description}, ${row.summary_md}, ${row.source_url}, ${row.pdf_url}, now()
-      )
-      on conflict (wipson_key) do update set
-        pdf_filename     = excluded.pdf_filename,
-        country          = excluded.country,
-        title            = excluded.title,
-        title_ko         = excluded.title_ko,
-        application_no   = excluded.application_no,
-        application_date = excluded.application_date,
-        publication_no   = excluded.publication_no,
-        registration_no  = excluded.registration_no,
-        applicants       = excluded.applicants,
-        inventors        = excluded.inventors,
-        ipc_main         = excluded.ipc_main,
-        status           = excluded.status,
-        description      = excluded.description,
-        source_url       = excluded.source_url,
-        pdf_url          = excluded.pdf_url,
-        updated_at       = now()
-    `;
-    upserted++;
-    if (upserted % 50 === 0) console.log(`  ...upserted ${upserted}/${matchedRows.length}`);
+  try {
+    for (const r of matchedRows) {
+      const row: PatentRow & { pdf_filename: string | null } = {
+        wipson_key: r.wipson_key,
+        country: r.country,
+        title: r.title,
+        title_ko: r.title_ko,
+        application_no: r.application_no,
+        application_date: r.application_date,
+        publication_no: r.publication_no,
+        registration_no: r.registration_no,
+        applicants: r.applicants,
+        inventors: r.inventors,
+        ipc_main: r.ipc_main,
+        status: r.status,
+        description: r.description,
+        summary_md: null,
+        source_url: r.source_url,
+        pdf_url: r.pdf_url,
+        pdf_filename: r.pdf_filename,
+      };
+      await client.query(
+        `insert into patents (
+          wipson_key, pdf_filename, country, title, title_ko,
+          application_no, application_date, publication_no, registration_no,
+          applicants, inventors, ipc_main, status,
+          description, summary_md, source_url, pdf_url, updated_at
+        ) values (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17, now()
+        )
+        on conflict (wipson_key) do update set
+          pdf_filename     = excluded.pdf_filename,
+          country          = excluded.country,
+          title            = excluded.title,
+          title_ko         = excluded.title_ko,
+          application_no   = excluded.application_no,
+          application_date = excluded.application_date,
+          publication_no   = excluded.publication_no,
+          registration_no  = excluded.registration_no,
+          applicants       = excluded.applicants,
+          inventors        = excluded.inventors,
+          ipc_main         = excluded.ipc_main,
+          status           = excluded.status,
+          description      = excluded.description,
+          source_url       = excluded.source_url,
+          pdf_url          = excluded.pdf_url,
+          updated_at       = now()`,
+        [
+          row.wipson_key, row.pdf_filename, row.country, row.title, row.title_ko,
+          row.application_no, row.application_date, row.publication_no, row.registration_no,
+          row.applicants, row.inventors, row.ipc_main, row.status,
+          row.description, row.summary_md, row.source_url, row.pdf_url,
+        ],
+      );
+      upserted++;
+      if (upserted % 50 === 0) console.log(`  ...upserted ${upserted}/${matchedRows.length}`);
+    }
+  } finally {
+    client.release();
+    await pool.end();
   }
   console.log(`\n✓ upsert 완료: ${upserted}건`);
 }
