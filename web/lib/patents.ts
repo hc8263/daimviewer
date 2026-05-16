@@ -22,7 +22,7 @@ export type PatentView = {
   summaryMd: string | null;
   description: string | null;
   descriptionKo: string | null;
-  pdfFilename: string | null;
+  pdfFilename?: string | null;
 };
 
 function toDateStr(v: unknown): string {
