@@ -30,6 +30,7 @@ export type PatentRow = {
   ipc_main: string | null;
   status: string | null;
   description: string | null;
+  description_ko: string | null;
   summary_md: string | null;
   source_url: string | null;
   pdf_url: string | null;

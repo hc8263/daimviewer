@@ -14,6 +14,7 @@ create table if not exists patents (
   ipc_main         text,
   status           text,
   description      text,
+  description_ko   text,
   summary_md       text,
   source_url       text,
   pdf_url          text,

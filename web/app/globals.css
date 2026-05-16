@@ -1167,6 +1167,54 @@ button { font: inherit; cursor: pointer; }
   color: var(--pr-fg-strong);
 }
 
+/* Translation accordion at the bottom of the summary */
+.dp-translation {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--pr-divider);
+}
+.dp-translation-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pr-fg-strong);
+  padding: 6px 0;
+}
+.dp-translation-toggle:hover { color: var(--pr-action); }
+.dp-translation-pending {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pr-fg-faint);
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: var(--pr-surface-alt);
+}
+.dp-translation-body {
+  margin-top: 12px;
+  padding: 16px 18px;
+  background: var(--pr-surface-alt);
+  border-radius: 10px;
+  border: 1px solid var(--pr-divider);
+}
+.dp-translation-body pre {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  color: var(--pr-fg);
+}
+.dp-translation-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pr-fg-muted);
+}
+
 /* AI badge */
 .dp-ai-note {
   display: inline-flex; align-items: center; gap: 6px;

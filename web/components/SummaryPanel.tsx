@@ -4,6 +4,41 @@ import { PRIcon, FlagBadge } from "./icons";
 import { renderMarkdown } from "./markdown";
 import type { PatentView } from "@/lib/patents";
 
+function TranslationSection({ descriptionKo, hasOriginal }: { descriptionKo: string | null; hasOriginal: boolean }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="dp-translation">
+      <button
+        type="button"
+        className="dp-translation-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <PRIcon name={open ? "ChevronDown" : "ChevronRight"} size={14} />
+        원문 한글 번역
+        {!descriptionKo && (
+          <span className="dp-translation-pending">
+            {hasOriginal ? "번역 준비 중" : "원문 없음"}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div className="dp-translation-body">
+          {descriptionKo ? (
+            <pre>{descriptionKo}</pre>
+          ) : (
+            <p className="dp-translation-empty">
+              {hasOriginal
+                ? "이 특허의 한글 번역이 아직 생성되지 않았습니다. 번역 파이프라인이 완료되면 이 영역에 표시됩니다."
+                : "원문이 적재되지 않아 번역할 수 없습니다."}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
   patent: PatentView;
   summaryMd: string;
@@ -71,11 +106,7 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
               : "요약 준비 중 — 명세서 기반 요약이 채워지면 이 영역에 표시됩니다"}
           </div>
           <div className="md">{renderMarkdown(summaryMd)}</div>
-          <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--pr-divider)", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-            <span style={{ fontSize: 11, color: "var(--pr-fg-faint)" }}>
-              AI 요약은 보조용입니다. 결정 전에 원문을 확인하세요.
-            </span>
-          </div>
+          <TranslationSection descriptionKo={patent.descriptionKo} hasOriginal={!!patent.description} />
         </div>
       </div>
     </main>
