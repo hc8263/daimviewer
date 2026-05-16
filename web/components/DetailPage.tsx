@@ -65,7 +65,7 @@ export function DetailPage({ patent, patents, summaryMd }: {
 
   return (
     <div className="pr-app">
-      <TopBar crumbs={["프로젝트", "2026 신규 개발 검토", patent.wipsonKey]} />
+      <TopBar backHref="/" crumbs={["프로젝트", "2026 신규 개발 검토", patent.wipsonKey]} />
       <div className="dp-shell">
         <DetailRail active={patent} patents={patents} width={leftW} />
         <Splitter onResize={onResizeLeft} />

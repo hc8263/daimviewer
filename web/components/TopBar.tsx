@@ -3,9 +3,10 @@ import React from "react";
 import Link from "next/link";
 import { PRIcon, WantedMark } from "./icons";
 
-export function TopBar({ crumbs = [], rightExtra = null }: {
+export function TopBar({ crumbs = [], rightExtra = null, backHref = null }: {
   crumbs?: string[];
   rightExtra?: React.ReactNode;
+  backHref?: string | null;
 }) {
   return (
     <header className="pr-topbar">
@@ -13,6 +14,12 @@ export function TopBar({ crumbs = [], rightExtra = null }: {
         <span className="brand-mark"><WantedMark size={14} /></span>
         특허 검토
       </Link>
+      {backHref && (
+        <Link href={backHref} className="pr-btn pr-btn-default pr-btn-sm" title="목록으로">
+          <PRIcon name="ChevronLeft" size={14} />
+          목록으로
+        </Link>
+      )}
       <div className="crumbs">
         {crumbs.map((c, i) => (
           <React.Fragment key={i}>
