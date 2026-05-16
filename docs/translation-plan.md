@@ -72,6 +72,42 @@
 - 어떤 단계에서든 실패하면 translation_log.jsonl에 status:"fail" + note 기록 후 lock 제거.
 ```
 
+## 다음 세션 재개 절차 (cheatsheet)
+
+```
+# 1. 로컬 Docker DB 살아있는지
+docker compose ps
+
+# 2. 현재까지 번역된 파일 수 확인
+ls data/descriptions_ko/*.txt | wc -l
+
+# 3. 미번역 목록 추출
+comm -23 \
+  <(ls data/descriptions/*.txt | xargs -n1 basename | sort) \
+  <(ls data/descriptions_ko/*.txt 2>/dev/null | xargs -n1 basename | sort) \
+  > /tmp/pending.txt
+wc -l /tmp/pending.txt
+
+# 4. 메인 에이전트에게 "다음 번역 라운드 진행" 요청 → 5~8개 subagent 병렬 디스패치
+#    (디스패치 프롬프트 템플릿: 본 plan 의 "Subagent 프롬프트" 섹션 참조)
+
+# 5. 라운드 끝나면 데드 lock 청소
+find data/descriptions_ko/.inflight/ -mmin +30 -delete 2>/dev/null
+
+# 6. 로컬 DB로 업로드 (DATABASE_URL override 필수 — 기본 .env.local 은 Neon)
+cd web && \
+  DATABASE_URL='postgres://postgres:postgres@localhost:5432/dmpat?sslmode=disable' \
+  NODE_PATH=./node_modules ./node_modules/.bin/tsx ../scripts/upload_translations.ts
+# 스크립트 첫 줄에 'target db: localhost:5432' 가 찍히는지 확인할 것!
+
+# 7. UI에서 검증
+open http://localhost:3000/patents/<wipsonKey>
+
+# 8. Neon으로 일괄 sync (별도 단계, 모든 번역이 만족스러울 때)
+cd web && NODE_PATH=./node_modules ./node_modules/.bin/tsx ../scripts/upload_translations.ts
+# .env.local 의 DATABASE_URL(Neon)이 적용됨. host는 'ep-fancy-fog-...neon.tech'.
+```
+
 ## 업로드 스크립트
 
 ### `scripts/upload_translations.ts`

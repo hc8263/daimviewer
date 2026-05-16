@@ -53,7 +53,12 @@ async function main() {
     process.exit(1);
   }
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const dbUrl = process.env.DATABASE_URL;
+  const host = (() => {
+    try { return new URL(dbUrl).host; } catch { return "?"; }
+  })();
+  console.log(`target db: ${host}`);
+  const pool = new Pool({ connectionString: dbUrl });
 
   // pdf_filename → wipson_key 매핑 (DB가 진실)
   const { rows } = await pool.query<{ wipson_key: string; pdf_filename: string }>(
