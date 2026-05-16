@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const REALM = "특허 검토";
+const REALM = "Patent Review";
 
 export function middleware(req: NextRequest) {
   // No password set → wide open (useful during local dev)
