@@ -22,6 +22,7 @@ export type PatentView = {
   summaryMd: string | null;
   description: string | null;
   descriptionKo: string | null;
+  pdfFilename: string | null;
 };
 
 function toDateStr(v: unknown): string {
@@ -50,6 +51,7 @@ function rowToView(r: PatentRow & { decision?: string | null; reviewer?: string 
     summaryMd: r.summary_md,
     description: r.description,
     descriptionKo: (r as any).description_ko ?? null,
+    pdfFilename: (r as any).pdf_filename ?? null,
   };
 }
 
@@ -62,7 +64,7 @@ export async function listPatents(): Promise<PatentView[]> {
       select p.wipson_key, p.country, p.title, p.title_ko,
              p.application_no, p.application_date, p.publication_no,
              p.registration_no, p.applicants, p.inventors,
-             p.ipc_main, p.status, p.source_url, p.pdf_url,
+             p.ipc_main, p.status, p.source_url, p.pdf_url, p.pdf_filename,
              null::text as description, null::text as description_ko,
              null::text as summary_md,
              null::text as decision, null::text as reviewer, null::text as review_date

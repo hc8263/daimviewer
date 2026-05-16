@@ -22,7 +22,8 @@ export function DetailRail({ active, patents, width = 260 }: {
     list = list.filter((p) =>
       (p.fileTitle || "").toLowerCase().includes(q) ||
       (p.titleKo || "").toLowerCase().includes(q) ||
-      (p.wipsonKey || "").toLowerCase().includes(q)
+      (p.wipsonKey || "").toLowerCase().includes(q) ||
+      (p.pdfFilename || "").toLowerCase().includes(q)
     );
   }
   const reviewed = patents.filter((p) => p.reviewStatus).length;
@@ -51,7 +52,7 @@ export function DetailRail({ active, patents, width = 260 }: {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="제목으로 검색…"
+          placeholder="제목 · 파일명으로 검색…"
           aria-label="특허 제목 검색"
         />
         {query && (
