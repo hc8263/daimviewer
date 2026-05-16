@@ -1,4 +1,14 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, neonConfig } from "@neondatabase/serverless";
+
+// Local docker dev: route Neon's HTTP-SQL endpoint at a local proxy
+// (local-neon-http-proxy) so the same neon() driver can talk to a regular
+// Postgres container. In prod NEON_HTTP_PROXY is unset and the driver hits
+// Neon's real endpoint.
+if (process.env.NEON_HTTP_PROXY) {
+  neonConfig.fetchEndpoint = process.env.NEON_HTTP_PROXY;
+  // proxy is plain http inside the docker network
+  neonConfig.useSecureWebSocket = false;
+}
 
 // `sql` will throw at call-time if DATABASE_URL is unset, but importing this
 // file never throws — so routes can fall back to mock data when Neon is not yet

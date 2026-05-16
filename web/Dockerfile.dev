@@ -1,0 +1,19 @@
+# Local dev image — runs `pnpm dev` with hot reload.
+# Bind-mount web/ in compose; node_modules lives inside the container.
+FROM node:24-alpine
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Cache deps layer
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Source is bind-mounted at runtime, but copy as a fallback for first boot.
+COPY . .
+
+EXPOSE 3000
+ENV HOSTNAME=0.0.0.0 PORT=3000
+
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
