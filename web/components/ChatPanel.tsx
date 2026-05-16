@@ -117,8 +117,7 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
         <div className="chat-header">
           <PRIcon name="Bot" size={16} color="#0066FF" />
           AI 검토 도우미
-          <span className="badge">BETA</span>
-          <span className="model">claude-haiku-4-5</span>
+          <span style={{ flex: 1 }} />
           <button
             className="pr-btn pr-btn-default pr-btn-sm"
             title="이 특허의 대화 기록을 모두 지웁니다"

@@ -29,11 +29,6 @@ export function TopBar({ crumbs = [], rightExtra = null, backHref = null }: {
         ))}
       </div>
       <div className="spacer" />
-      <div className="pr-search">
-        <PRIcon name="Search" size={14} />
-        <input type="text" placeholder="WIPSONKEY, 제목, 출원인…" />
-        <kbd>⌘K</kbd>
-      </div>
       {rightExtra}
       <button className="pr-iconbtn" title="설정"><PRIcon name="Settings" size={16} /></button>
       <span className="pr-userchip">
