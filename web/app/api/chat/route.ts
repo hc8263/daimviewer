@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { getPatent, resolveSummary } from "@/lib/patents";
 
@@ -62,21 +61,16 @@ export async function POST(req: NextRequest) {
   }
 
   const result = streamText({
-    model: anthropic("claude-haiku-4-5"),
-    // Use a structured system with cache_control on the long context block so
-    // subsequent queries about the same patent reuse the prompt cache.
-    system: [
-      {
-        type: "text",
-        text: systemText,
-        providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
-      },
-    ] as unknown as string,
+    // Route through Vercel AI Gateway (AI_GATEWAY_API_KEY).
+    model: "anthropic/claude-haiku-4-5",
+    system: systemText,
     messages: await convertToModelMessages(messages),
+    onError({ error }) {
+      console.error("[chat] streamText error:", error);
+    },
   });
 
-  // Stream raw text to keep ChatPanel decoding trivial.
-  return new Response(result.textStream as unknown as ReadableStream, {
-    headers: { "content-type": "text/plain; charset=utf-8" },
-  });
+  // Stream raw text. toTextStreamResponse handles the AsyncIterable→ReadableStream
+  // conversion correctly (AI SDK v6: textStream is async iterable, not stream).
+  return result.toTextStreamResponse();
 }

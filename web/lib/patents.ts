@@ -23,6 +23,12 @@ export type PatentView = {
   description: string | null;
 };
 
+function toDateStr(v: unknown): string {
+  if (!v) return "";
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  return String(v).slice(0, 10);
+}
+
 function rowToView(r: PatentRow & { decision?: string | null; reviewer?: string | null; review_date?: string | null }): PatentView {
   return {
     wipsonKey: r.wipson_key,
@@ -31,7 +37,7 @@ function rowToView(r: PatentRow & { decision?: string | null; reviewer?: string 
     country: r.country || "KR",
     applicant: r.applicants || "",
     inventor: r.inventors || "",
-    appDate: r.application_date || "",
+    appDate: toDateStr(r.application_date),
     pubDate: r.publication_no || "",
     ipc: r.ipc_main || "",
     classifier: r.status || "",
