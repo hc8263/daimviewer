@@ -5,30 +5,6 @@ import type { PatentView } from "@/lib/patents";
 
 type Msg = { role: "user" | "assistant"; text: string };
 
-const storageKey = (wipsonKey: string) => `chat:${wipsonKey}`;
-
-function loadMessages(wipsonKey: string): Msg[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(storageKey(wipsonKey));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveMessages(wipsonKey: string, messages: Msg[]) {
-  if (typeof window === "undefined") return;
-  try {
-    if (messages.length === 0) localStorage.removeItem(storageKey(wipsonKey));
-    else localStorage.setItem(storageKey(wipsonKey), JSON.stringify(messages));
-  } catch {
-    // quota or serialization error — non-fatal
-  }
-}
-
 function escapeAndFormat(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -45,27 +21,34 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
   const [pending, setPending] = React.useState(false);
   const msgsRef = React.useRef<HTMLDivElement>(null);
 
-  // Load persisted conversation when the active patent changes.
+  // Load shared conversation from the server whenever the active patent changes.
   React.useEffect(() => {
-    setMessages(loadMessages(patent.wipsonKey));
+    let cancelled = false;
+    setMessages([]);
+    fetch(`/api/chat/history?wipsonKey=${encodeURIComponent(patent.wipsonKey)}`)
+      .then((r) => (r.ok ? r.json() : { messages: [] }))
+      .then((data) => {
+        if (cancelled) return;
+        setMessages(Array.isArray(data?.messages) ? data.messages : []);
+      })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
   }, [patent.wipsonKey]);
-
-  // Persist on every change. Skips when the assistant placeholder is still
-  // streaming (empty text) to avoid thrashing.
-  React.useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (last && last.role === "assistant" && last.text === "") return;
-    saveMessages(patent.wipsonKey, messages);
-  }, [messages, patent.wipsonKey]);
 
   React.useEffect(() => {
     if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
   }, [messages]);
 
-  const clearContext = () => {
-    if (messages.length > 0 && !confirm("이 특허에 대한 대화를 모두 지웁니다. 진행할까요?")) return;
+  const clearContext = async () => {
+    if (messages.length > 0 && !confirm("이 특허에 대한 대화를 모두 지웁니다. 다른 작업자에게도 보이지 않게 됩니다. 진행할까요?")) return;
     setMessages([]);
-    saveMessages(patent.wipsonKey, []);
+    try {
+      await fetch(`/api/chat/history?wipsonKey=${encodeURIComponent(patent.wipsonKey)}`, {
+        method: "DELETE",
+      });
+    } catch {
+      // ignore — local UI is already cleared
+    }
   };
 
   const suggestions = [

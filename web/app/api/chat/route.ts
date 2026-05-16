@@ -1,9 +1,22 @@
 import { NextRequest } from "next/server";
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { getPatent, resolveSummary } from "@/lib/patents";
+import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+async function logMessage(wipsonKey: string, role: "user" | "assistant", content: string) {
+  if (!sql || !content.trim()) return;
+  try {
+    await sql`
+      insert into chat_messages (wipson_key, reviewer, role, content)
+      values (${wipsonKey}, null, ${role}, ${content})
+    `;
+  } catch (err) {
+    console.warn("[chat] failed to log message:", err);
+  }
+}
 
 // ~150k tokens ≈ ~600k chars (rough heuristic for Korean/English mixed). Trim
 // the END of the description (least likely to hold core claims).
@@ -39,6 +52,19 @@ export async function POST(req: NextRequest) {
 
   const patent = await getPatent(wipsonKey);
   if (!patent) return new Response("patent not found", { status: 404 });
+
+  // Persist the new user turn before invoking the model. We assume the client
+  // sends the full history; the latest user message is the one we haven't
+  // logged yet.
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  const lastUserText = lastUser
+    ? (typeof (lastUser as any).content === "string"
+        ? (lastUser as any).content
+        : Array.isArray((lastUser as any).content)
+          ? (lastUser as any).content.map((p: any) => (typeof p === "string" ? p : p?.text ?? "")).join("")
+          : "")
+    : "";
+  if (lastUserText) await logMessage(wipsonKey, "user", lastUserText);
   const summaryMd = resolveSummary(patent);
   const systemText = buildSystem(patent, summaryMd);
 
@@ -54,6 +80,7 @@ export async function POST(req: NextRequest) {
             await new Promise((r) => setTimeout(r, 6));
           }
           controller.close();
+          await logMessage(wipsonKey, "assistant", mock);
         },
       }),
       { headers: { "content-type": "text/plain; charset=utf-8" } }
@@ -67,6 +94,9 @@ export async function POST(req: NextRequest) {
     messages: await convertToModelMessages(messages),
     onError({ error }) {
       console.error("[chat] streamText error:", error);
+    },
+    onFinish({ text }) {
+      void logMessage(wipsonKey, "assistant", text);
     },
   });
 
