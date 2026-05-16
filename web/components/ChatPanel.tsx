@@ -5,6 +5,30 @@ import type { PatentView } from "@/lib/patents";
 
 type Msg = { role: "user" | "assistant"; text: string };
 
+const storageKey = (wipsonKey: string) => `chat:${wipsonKey}`;
+
+function loadMessages(wipsonKey: string): Msg[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(storageKey(wipsonKey));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(wipsonKey: string, messages: Msg[]) {
+  if (typeof window === "undefined") return;
+  try {
+    if (messages.length === 0) localStorage.removeItem(storageKey(wipsonKey));
+    else localStorage.setItem(storageKey(wipsonKey), JSON.stringify(messages));
+  } catch {
+    // quota or serialization error — non-fatal
+  }
+}
+
 function escapeAndFormat(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -21,13 +45,28 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
   const [pending, setPending] = React.useState(false);
   const msgsRef = React.useRef<HTMLDivElement>(null);
 
+  // Load persisted conversation when the active patent changes.
   React.useEffect(() => {
-    setMessages([]);
+    setMessages(loadMessages(patent.wipsonKey));
   }, [patent.wipsonKey]);
+
+  // Persist on every change. Skips when the assistant placeholder is still
+  // streaming (empty text) to avoid thrashing.
+  React.useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (last && last.role === "assistant" && last.text === "") return;
+    saveMessages(patent.wipsonKey, messages);
+  }, [messages, patent.wipsonKey]);
 
   React.useEffect(() => {
     if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
   }, [messages]);
+
+  const clearContext = () => {
+    if (messages.length > 0 && !confirm("이 특허에 대한 대화를 모두 지웁니다. 진행할까요?")) return;
+    setMessages([]);
+    saveMessages(patent.wipsonKey, []);
+  };
 
   const suggestions = [
     "청구항 1의 핵심 한정 사항은?",
@@ -97,8 +136,14 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
           AI 검토 도우미
           <span className="badge">BETA</span>
           <span className="model">claude-haiku-4-5</span>
-          <button className="pr-iconbtn" title="대화 새로 시작" onClick={() => setMessages([])}>
-            <PRIcon name="RefreshCw" size={13} />
+          <button
+            className="pr-btn pr-btn-default pr-btn-sm"
+            title="이 특허의 대화 기록을 모두 지웁니다"
+            onClick={clearContext}
+            disabled={messages.length === 0 || pending}
+          >
+            <PRIcon name="RefreshCw" size={12} />
+            대화 지우기
           </button>
         </div>
       )}
