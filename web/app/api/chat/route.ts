@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import { streamText, type ModelMessage } from "ai";
 import { getPatent, resolveSummary } from "@/lib/patents";
 import { sql } from "@/lib/db";
 
@@ -48,7 +48,10 @@ export async function POST(req: NextRequest) {
   if (!body?.wipsonKey || !Array.isArray(body?.messages)) {
     return new Response("wipsonKey and messages required", { status: 400 });
   }
-  const { wipsonKey, messages } = body as { wipsonKey: string; messages: UIMessage[] };
+  const { wipsonKey, messages } = body as {
+    wipsonKey: string;
+    messages: Array<{ role: "user" | "assistant"; content: string }>;
+  };
 
   const patent = await getPatent(wipsonKey);
   if (!patent) return new Response("patent not found", { status: 404 });
@@ -57,20 +60,14 @@ export async function POST(req: NextRequest) {
   // sends the full history; the latest user message is the one we haven't
   // logged yet.
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  const lastUserText = lastUser
-    ? (typeof (lastUser as any).content === "string"
-        ? (lastUser as any).content
-        : Array.isArray((lastUser as any).content)
-          ? (lastUser as any).content.map((p: any) => (typeof p === "string" ? p : p?.text ?? "")).join("")
-          : "")
-    : "";
+  const lastUserText = lastUser?.content ?? "";
   if (lastUserText) await logMessage(wipsonKey, "user", lastUserText);
   const summaryMd = resolveSummary(patent);
   const systemText = buildSystem(patent, summaryMd);
 
   // Mock fallback when no API key is configured: stream a canned response.
   if (!process.env.AI_GATEWAY_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-    const mock = `(개발 모드 · API 키 미설정)\n\n이 환경에서는 실제 모델 호출이 비활성화되어 있습니다.\n\n**컨텍스트 확인**\n- 특허 명칭: ${patent.fileTitle}\n- 명세서 길이: ${(patent.description || "").length.toLocaleString()}자\n\n프로덕션에서는 Claude Haiku 4.5가 위 명세서 전문을 근거로 답변합니다.`;
+    const mock = `(개발 모드 · API 키 미설정)\n\n이 환경에서는 실제 모델 호출이 비활성화되어 있습니다.\n\n**컨텍스트 확인**\n- 특허 명칭: ${patent.fileTitle}\n- 명세서 길이: ${(patent.description || "").length.toLocaleString()}자\n\n프로덕션에서는 DeepSeek V4 Flash가 위 명세서 전문을 근거로 답변합니다.`;
     const encoder = new TextEncoder();
     return new Response(
       new ReadableStream({
@@ -89,9 +86,9 @@ export async function POST(req: NextRequest) {
 
   const result = streamText({
     // Route through Vercel AI Gateway (AI_GATEWAY_API_KEY).
-    model: "anthropic/claude-haiku-4-5",
+    model: "deepseek/deepseek-v4-flash",
     system: systemText,
-    messages: await convertToModelMessages(messages),
+    messages: messages.map((m) => ({ role: m.role, content: m.content })) as ModelMessage[],
     onError({ error }) {
       console.error("[chat] streamText error:", error);
     },

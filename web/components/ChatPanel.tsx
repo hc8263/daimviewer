@@ -51,13 +51,6 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
     }
   };
 
-  const suggestions = [
-    "청구항 1의 핵심 한정 사항은?",
-    "선행 특허와의 차별점은?",
-    "회피 설계 방법을 알려줘",
-    "당사 기술과 충돌하는 부분?",
-  ];
-
   const send = async (text: string) => {
     if (!text.trim() || pending) return;
     const userMsg: Msg = { role: "user", text };
@@ -152,14 +145,6 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
           </div>
         ))}
       </div>
-
-      {messages.length === 0 && (
-        <div className="chat-suggestions">
-          {suggestions.map((s) => (
-            <button key={s} className="chat-suggestion" onClick={() => send(s)}>{s}</button>
-          ))}
-        </div>
-      )}
 
       <div className="chat-input-row">
         <div className="chat-input-wrap">
