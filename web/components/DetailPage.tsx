@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 import { TopBar } from "./TopBar";
 import { DetailRail } from "./DetailRail";
 import { SummaryPanel } from "./SummaryPanel";
@@ -18,21 +19,64 @@ function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
 
+function readStored(key: string, fallback: number, min: number, max: number) {
+  if (typeof window === "undefined") return fallback;
+  const v = parseInt(window.localStorage.getItem(key) || "", 10);
+  if (!Number.isFinite(v)) return fallback;
+  return clamp(v, min, max);
+}
+
 export function DetailPage({ patent, patents, summaryMd }: {
   patent: PatentView;
   patents: PatentView[];
   summaryMd: string;
 }) {
-  const [decision, setDecision] = React.useState<string | null>(patent.reviewStatus);
-  const [leftW, setLeftW] = React.useState(LEFT_DEFAULT);
-  const [rightW, setRightW] = React.useState(RIGHT_DEFAULT);
+  const router = useRouter();
+  const [items, setItems] = React.useState<PatentView[]>(patents);
+  React.useEffect(() => setItems(patents), [patents]);
+  const activePatent = items.find((p) => p.wipsonKey === patent.wipsonKey) ?? patent;
+  const [decision, setDecisionState] = React.useState<string | null>(patent.reviewStatus);
+  const [leftW, setLeftW] = React.useState(() => readStored("pr.leftW", LEFT_DEFAULT, LEFT_MIN, LEFT_MAX));
+  const [rightW, setRightW] = React.useState(() => readStored("pr.rightW", RIGHT_DEFAULT, RIGHT_MIN, RIGHT_MAX));
 
+  const setDecision = React.useCallback((d: string | null) => {
+    setDecisionState(d);
+    setItems((prev) => prev.map((p) => p.wipsonKey === patent.wipsonKey
+      ? {
+          ...p,
+          reviewStatus: d,
+          reviewer: d ? (p.reviewer || "USER") : null,
+          reviewDate: d ? (p.reviewDate || new Date().toISOString().slice(0, 10)) : null,
+        }
+      : p));
+  }, [patent.wipsonKey]);
+
+  // ↑/↓ prev/next 이동, ←/→ 본문 스크롤
   React.useEffect(() => {
-    const lv = parseInt(localStorage.getItem("pr.leftW") || "", 10);
-    if (Number.isFinite(lv)) setLeftW(clamp(lv, LEFT_MIN, LEFT_MAX));
-    const rv = parseInt(localStorage.getItem("pr.rightW") || "", 10);
-    if (Number.isFinite(rv)) setRightW(clamp(rv, RIGHT_MIN, RIGHT_MAX));
-  }, []);
+    const navList = items.filter((p) => !p.excluded);
+    const idx = navList.findIndex((p) => p.wipsonKey === patent.wipsonKey);
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowDown" || e.key === "j") {
+        const n = navList[idx + 1];
+        if (n) { e.preventDefault(); router.push(`/patents/${encodeURIComponent(n.wipsonKey)}`); }
+      } else if (e.key === "ArrowUp" || e.key === "k") {
+        const n = navList[idx - 1];
+        if (n) { e.preventDefault(); router.push(`/patents/${encodeURIComponent(n.wipsonKey)}`); }
+      } else if (e.key === "ArrowLeft") {
+        const body = document.querySelector(".dp-body");
+        if (body) { e.preventDefault(); body.scrollBy({ top: -120, behavior: "smooth" }); }
+      } else if (e.key === "ArrowRight") {
+        const body = document.querySelector(".dp-body");
+        if (body) { e.preventDefault(); body.scrollBy({ top: 120, behavior: "smooth" }); }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [patent.wipsonKey, items, router]);
 
   React.useEffect(() => {
     setDecision(patent.reviewStatus);
@@ -65,14 +109,14 @@ export function DetailPage({ patent, patents, summaryMd }: {
 
   return (
     <div className="pr-app">
-      <TopBar backHref="/" crumbs={["프로젝트", "2026 신규 개발 검토", patent.wipsonKey]} />
+      <TopBar crumbs={[{ label: "프로젝트", href: "/" }, { label: "2026 신규 개발 검토", href: "/" }, patent.wipsonKey]} />
       <div className="dp-shell">
-        <DetailRail active={patent} patents={patents} width={leftW} />
+        <DetailRail active={activePatent} patents={items} width={leftW} />
         <Splitter onResize={onResizeLeft} />
-        <SummaryPanel patent={patent} summaryMd={summaryMd} decision={decision} setDecision={setDecision} />
+        <SummaryPanel patent={activePatent} summaryMd={summaryMd} decision={decision} setDecision={setDecision} />
         <Splitter onResize={onResizeRight} />
-        <div className="dp-chat-right" style={{ width: rightW }}>
-          <ChatPanel patent={patent} />
+        <div className="dp-chat-right" style={{ width: rightW }} suppressHydrationWarning>
+          <ChatPanel patent={activePatent} />
         </div>
       </div>
     </div>

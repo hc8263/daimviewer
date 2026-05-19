@@ -1,40 +1,47 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { PRIcon, WantedMark } from "./icons";
+import { PRIcon } from "./icons";
 
-export function TopBar({ crumbs = [], rightExtra = null, backHref = null }: {
-  crumbs?: string[];
+export type Crumb = string | { label: string; href: string };
+
+export function TopBar({ crumbs = [], rightExtra = null }: {
+  crumbs?: Crumb[];
   rightExtra?: React.ReactNode;
-  backHref?: string | null;
 }) {
   return (
     <header className="pr-topbar">
       <Link href="/" className="brand" style={{ marginRight: 4 }}>
-        <span className="brand-mark"><WantedMark size={14} /></span>
-        특허 검토
+        <span className="brand-mark" aria-hidden>다</span>
+        <span className="brand-name">
+          다임<span className="brand-name-accent">뷰어</span>
+        </span>
       </Link>
-      {backHref && (
-        <Link href={backHref} className="pr-btn pr-btn-default pr-btn-sm" title="목록으로">
-          <PRIcon name="ChevronLeft" size={14} />
-          목록으로
-        </Link>
-      )}
       <div className="crumbs">
-        {crumbs.map((c, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <span className="sep"><PRIcon name="ChevronRight" size={12} /></span>}
-            <span className={i === crumbs.length - 1 ? "cur" : ""}>{c}</span>
-          </React.Fragment>
-        ))}
+        {crumbs.map((c, i) => {
+          const isLast = i === crumbs.length - 1;
+          const label = typeof c === "string" ? c : c.label;
+          const href = typeof c === "string" ? null : c.href;
+          return (
+            <React.Fragment key={i}>
+              {i > 0 && <span className="sep"><PRIcon name="ChevronRight" size={12} /></span>}
+              {href && !isLast ? (
+                <Link href={href} className="crumb-link">{label}</Link>
+              ) : (
+                <span className={isLast ? "cur" : ""}>{label}</span>
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
       <div className="spacer" />
       {rightExtra}
-      <button className="pr-iconbtn" title="설정"><PRIcon name="Settings" size={16} /></button>
       <span className="pr-userchip">
-        <span className="av">박</span>
-        박경민
+        USER
       </span>
+      <Link href="/admin" className="pr-iconbtn" title="관리자 모드" aria-label="관리자 모드">
+        <PRIcon name="Settings" size={16} />
+      </Link>
     </header>
   );
 }

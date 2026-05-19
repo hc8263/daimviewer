@@ -44,6 +44,8 @@ services:
       NEON_HTTP_PROXY: http://neon-proxy:4444/sql
       # No Basic Auth in local dev
       SITE_PASSWORD: ""
+      # 다임뷰어 관리자 모드 비밀번호 (/admin)
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       # Optional: enable chat by exporting one of these in your shell before `up`
       AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

@@ -39,19 +39,82 @@ function TranslationSection({ descriptionKo, hasOriginal }: { descriptionKo: str
   );
 }
 
-export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
-  patent: PatentView;
-  summaryMd: string;
-  decision: string | null;
-  setDecision: (d: string) => void;
-}) {
-  const save = async (d: string) => {
-    setDecision(d);
+function CommentBox({ wipsonKey, initial }: { wipsonKey: string; initial: string | null }) {
+  const [value, setValue] = React.useState(initial ?? "");
+  const [status, setStatus] = React.useState<"idle" | "saving" | "saved">("idle");
+  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSaved = React.useRef<string>(initial ?? "");
+
+  React.useEffect(() => {
+    setValue(initial ?? "");
+    lastSaved.current = initial ?? "";
+    setStatus("idle");
+  }, [wipsonKey, initial]);
+
+  const persist = React.useCallback(async (next: string) => {
+    if (next === lastSaved.current) return;
+    setStatus("saving");
     try {
       await fetch("/api/review", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wipsonKey: patent.wipsonKey, decision: d, reviewer: "박경민" }),
+        body: JSON.stringify({ wipsonKey, reviewer: "USER", note: next }),
+      });
+      lastSaved.current = next;
+      setStatus("saved");
+    } catch {
+      setStatus("idle");
+    }
+  }, [wipsonKey]);
+
+  const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setValue(v);
+    setStatus("idle");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => persist(v), 700);
+  };
+
+  const onBlur = () => {
+    if (timer.current) clearTimeout(timer.current);
+    persist(value);
+  };
+
+  return (
+    <div className="dp-comment">
+      <div className="dp-comment-h">
+        <PRIcon name="MessageSquare" size={13} />
+        <span>코멘트</span>
+        <span className="dp-comment-status">
+          {status === "saving" ? "저장 중…" : status === "saved" ? "저장됨" : ""}
+        </span>
+      </div>
+      <textarea
+        className="dp-comment-input"
+        placeholder="이 특허에 대한 코멘트를 남겨주세요"
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        rows={2}
+      />
+    </div>
+  );
+}
+
+export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
+  patent: PatentView;
+  summaryMd: string;
+  decision: string | null;
+  setDecision: (d: string | null) => void;
+}) {
+  const save = async (d: string) => {
+    const next = decision === d ? null : d;
+    setDecision(next);
+    try {
+      await fetch("/api/review", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wipsonKey: patent.wipsonKey, decision: next, reviewer: "USER" }),
       });
     } catch {
       /* offline / no DB — ignore */
@@ -99,6 +162,16 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
 
       <div className="dp-body">
         <div className="dp-body-inner">
+          {patent.adminNote && (
+            <div className="dp-admin-note">
+              <div className="dp-admin-note-h">
+                <PRIcon name="Info" size={12} />
+                <span>관리자 메모</span>
+              </div>
+              <div className="dp-admin-note-body md">{renderMarkdown(patent.adminNote)}</div>
+            </div>
+          )}
+          <CommentBox wipsonKey={patent.wipsonKey} initial={patent.comment} />
           <div className="dp-ai-note">
             <PRIcon name="Sparkles" size={12} color="#0066FF" />
             {patent.summaryMd

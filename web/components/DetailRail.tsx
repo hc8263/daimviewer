@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FlagBadge, StatusPill } from "./icons";
 import type { PatentView } from "@/lib/patents";
@@ -35,11 +34,10 @@ export function DetailRail({ active, patents, width = 260 }: {
   }, [active.wipsonKey]);
 
   return (
-    <aside className="dp-rail" style={{ width }}>
+    <aside className="dp-rail" style={{ width }} suppressHydrationWarning>
       <div className="dp-rail-h">
         <div className="title">
-          <span>특허 {patents.length}건</span>
-          <Link href="/" style={{ fontSize: 11, color: "var(--pr-fg-muted)", fontWeight: 600 }}>전체 목록 ↗</Link>
+          <span>검토 중 · {patents.length}건</span>
         </div>
         <div className="meta">
           <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--pr-fg-strong)" }}>{reviewed}/{patents.length}</span>

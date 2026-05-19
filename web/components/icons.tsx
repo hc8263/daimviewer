@@ -28,6 +28,11 @@ const icPaths: Record<string, string[]> = {
   Bookmark:    ["M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"],
   Settings:    ["M12 15a3 3 0 100-6 3 3 0 000 6z"],
   Star:        ["M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"],
+  MessageSquare: ["M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"],
+  Info:        ["M12 22a10 10 0 100-20 10 10 0 000 20z", "M12 16v-4", "M12 8h.01"],
+  Trash:       ["M3 6h18", "M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2", "M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"],
+  Upload:      ["M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4", "M17 8l-5-5-5 5", "M12 3v12"],
+  Lock:        ["M5 11h14v10H5z", "M8 11V7a4 4 0 018 0v4"],
 };
 
 export function PRIcon({ name, size = 16, color = "currentColor", strokeWidth = 1.7, style }: {

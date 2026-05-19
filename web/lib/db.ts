@@ -32,6 +32,7 @@ export type PatentRow = {
   description: string | null;
   description_ko: string | null;
   summary_md: string | null;
+  admin_note: string | null;
   source_url: string | null;
   pdf_url: string | null;
 };

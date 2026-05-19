@@ -14,6 +14,7 @@
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -21,8 +22,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tsx": "^4.21.1",
-    "typescript": "^5",
-    "xlsx": "^0.18.5"
+    "typescript": "^5"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [

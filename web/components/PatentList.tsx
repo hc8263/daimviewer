@@ -7,23 +7,28 @@ import type { PatentView } from "@/lib/patents";
 
 export function PatentList({ patents, classifiers }: { patents: PatentView[]; classifiers: string[] }) {
   const router = useRouter();
-  const [filter, setFilter] = React.useState<{ status: string | null; classifier: string | null; reviewer: string | null; country: string | null }>({
-    status: null, classifier: null, reviewer: null, country: null,
+  const [items, setItems] = React.useState<PatentView[]>(patents);
+  React.useEffect(() => setItems(patents), [patents]);
+
+  const [filter, setFilter] = React.useState<{ status: string | null; classifier: string | null; reviewer: string | null; country: string | null; excluded: boolean }>({
+    status: null, classifier: null, reviewer: null, country: null, excluded: false,
   });
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [sort, setSort] = React.useState({ col: "appDate" as keyof PatentView, dir: "desc" as "asc" | "desc" });
 
-  const all = patents;
-  const total = all.length;
-  const reviewed = all.filter((p) => p.reviewStatus).length;
+  // Visible pool: by default, exclude deleted; if "삭제됨" tab, show only excluded
+  const pool = items.filter((p) => filter.excluded ? p.excluded : !p.excluded);
+  const total = pool.length;
+  const reviewed = pool.filter((p) => p.reviewStatus).length;
   const stats = {
-    relevant: all.filter((p) => p.reviewStatus === "relevant").length,
-    maybe: all.filter((p) => p.reviewStatus === "maybe").length,
-    irrelevant: all.filter((p) => p.reviewStatus === "irrelevant").length,
-    unreviewed: all.filter((p) => !p.reviewStatus).length,
+    relevant: pool.filter((p) => p.reviewStatus === "relevant").length,
+    maybe: pool.filter((p) => p.reviewStatus === "maybe").length,
+    irrelevant: pool.filter((p) => p.reviewStatus === "irrelevant").length,
+    unreviewed: pool.filter((p) => !p.reviewStatus).length,
   };
+  const excludedCount = items.filter((p) => p.excluded).length;
 
-  let rows = all;
+  let rows = pool;
   if (filter.status === "unreviewed") rows = rows.filter((p) => !p.reviewStatus);
   else if (filter.status) rows = rows.filter((p) => p.reviewStatus === filter.status);
   if (filter.classifier) rows = rows.filter((p) => p.classifier === filter.classifier);
@@ -53,6 +58,51 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
 
   const goDetail = (key: string) => router.push(`/patents/${encodeURIComponent(key)}`);
 
+  const bulkExclude = async (excluded: boolean) => {
+    if (selected.size === 0) return;
+    const keys = Array.from(selected);
+    const label = excluded ? `${keys.length}건을 분석 대상에서 제외할까요?` : `${keys.length}건을 복원할까요?`;
+    if (!confirm(label)) return;
+    try {
+      await fetch("/api/review", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wipsonKeys: keys, excluded, reviewer: "USER" }),
+      });
+    } catch {
+      /* offline — ignore */
+    }
+    setItems((prev) => prev.map((p) => keys.includes(p.wipsonKey) ? { ...p, excluded } : p));
+    setSelected(new Set());
+  };
+
+  const onExport = async () => {
+    const keys = Array.from(selected);
+    if (keys.length === 0) {
+      window.location.href = "/api/export";
+      return;
+    }
+    const res = await fetch("/api/export", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ wipsonKeys: keys }),
+    });
+    if (!res.ok) {
+      alert("CSV 내보내기 실패");
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const ts = new Date().toISOString().slice(0, 10);
+    a.download = `daimviewer-export-${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="pr-app">
       <TopBar crumbs={["프로젝트", "2026 신규 개발 검토", `특허 ${total}건`]} />
@@ -60,20 +110,23 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
         <aside className="lp-rail">
           <div className="section">
             <div className="section-h">검토 상태</div>
-            <div className={`nav-item ${filter.status === null ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null }))}>
+            <div className={`nav-item ${!filter.excluded && filter.status === null ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null, excluded: false }))}>
               <PRIcon name="Circle" size={14} color="var(--pr-fg-muted)" />전체<span className="count">{total}</span>
             </div>
-            <div className={`nav-item ${filter.status === "unreviewed" ? "active" : ""}`} onClick={() => setStatus("unreviewed")}>
+            <div className={`nav-item ${!filter.excluded && filter.status === "unreviewed" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("unreviewed"); }}>
               <PRIcon name="Circle" size={14} color="var(--pr-fg-faint)" />미검토<span className="count">{stats.unreviewed}</span>
             </div>
-            <div className={`nav-item ${filter.status === "relevant" ? "active" : ""}`} onClick={() => setStatus("relevant")}>
+            <div className={`nav-item ${!filter.excluded && filter.status === "relevant" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("relevant"); }}>
               <PRIcon name="CheckCircle" size={14} color="#0066FF" />관련<span className="count">{stats.relevant}</span>
             </div>
-            <div className={`nav-item ${filter.status === "maybe" ? "active" : ""}`} onClick={() => setStatus("maybe")}>
+            <div className={`nav-item ${!filter.excluded && filter.status === "maybe" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("maybe"); }}>
               <PRIcon name="HelpCircle" size={14} color="#FF9200" />보류<span className="count">{stats.maybe}</span>
             </div>
-            <div className={`nav-item ${filter.status === "irrelevant" ? "active" : ""}`} onClick={() => setStatus("irrelevant")}>
+            <div className={`nav-item ${!filter.excluded && filter.status === "irrelevant" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("irrelevant"); }}>
               <PRIcon name="XCircle" size={14} color="#878A93" />무관<span className="count">{stats.irrelevant}</span>
+            </div>
+            <div className={`nav-item ${filter.excluded ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, excluded: !f.excluded, status: null }))}>
+              <PRIcon name="Trash" size={14} color="var(--pr-fg-faint)" />삭제됨<span className="count">{excludedCount}</span>
             </div>
           </div>
           <div className="section">
@@ -81,7 +134,7 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
             {classifiers.map((c) => (
               <div key={c} className={`nav-item ${filter.classifier === c ? "active" : ""}`}
                    onClick={() => setFilter((f) => ({ ...f, classifier: f.classifier === c ? null : c }))}>
-                {c}<span className="count">{all.filter((p) => p.classifier === c).length}</span>
+                {c}<span className="count">{pool.filter((p) => p.classifier === c).length}</span>
               </div>
             ))}
           </div>
@@ -89,15 +142,28 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
 
         <main className="lp-main">
           <div className="lp-toolbar">
-            <span className="title">특허 목록</span>
+            <span className="title">{filter.excluded ? "삭제된 특허" : "특허 목록"}</span>
             <span className="subtitle">{rows.length}건 / 총 {total}건</span>
             <div className="progress">
               <span className="progress-text">{reviewed}/{total}</span>
-              <div className="progress-bar"><div className="progress-fill" style={{ width: `${(reviewed / total) * 100}%` }} /></div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: total ? `${(reviewed / total) * 100}%` : "0%" }} /></div>
               <span className="progress-text" style={{ color: "var(--pr-fg)" }}>{total ? Math.round((reviewed / total) * 100) : 0}%</span>
             </div>
             <div style={{ flex: 1 }} />
-            <button className="pr-btn pr-btn-default pr-btn-sm"><PRIcon name="ExternalLink" size={13} />CSV 내보내기</button>
+            {selected.size > 0 && !filter.excluded && (
+              <button className="pr-btn pr-btn-default pr-btn-sm" onClick={() => bulkExclude(true)}>
+                <PRIcon name="Trash" size={13} />삭제 ({selected.size})
+              </button>
+            )}
+            {selected.size > 0 && filter.excluded && (
+              <button className="pr-btn pr-btn-default pr-btn-sm" onClick={() => bulkExclude(false)}>
+                <PRIcon name="RefreshCw" size={13} />복원 ({selected.size})
+              </button>
+            )}
+            <button className="pr-btn pr-btn-default pr-btn-sm" onClick={onExport}>
+              <PRIcon name="ExternalLink" size={13} />
+              CSV 내보내기{selected.size > 0 ? ` (${selected.size})` : ""}
+            </button>
           </div>
 
           <div className="lp-filterbar">
@@ -127,7 +193,6 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                 <col style={{ width: 95 }} />
                 <col style={{ width: 95 }} />
                 <col style={{ width: 95 }} />
-                <col style={{ width: 36 }} />
               </colgroup>
               <thead>
                 <tr>
@@ -145,7 +210,6 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                   <th>검토자</th>
                   <th>상태</th>
                   <th>검토일</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -169,9 +233,6 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                     <td>{p.reviewer || <span style={{ color: "var(--pr-fg-faint)" }}>—</span>}</td>
                     <td><StatusPill status={p.reviewStatus} /></td>
                     <td className="mono" style={{ color: "var(--pr-fg-muted)" }}>{p.reviewDate || <span style={{ color: "var(--pr-fg-faint)" }}>—</span>}</td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <button className="pr-iconbtn" title="더보기"><PRIcon name="More" size={14} /></button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
