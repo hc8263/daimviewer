@@ -162,23 +162,26 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
 
       <div className="dp-body">
         <div className="dp-body-inner">
-          {patent.adminNote && (
-            <div className="dp-admin-note">
-              <div className="dp-admin-note-h">
-                <PRIcon name="Info" size={12} />
-                <span>관리자 메모</span>
-              </div>
-              <div className="dp-admin-note-body md">{renderMarkdown(patent.adminNote)}</div>
-            </div>
-          )}
           <CommentBox wipsonKey={patent.wipsonKey} initial={patent.comment} />
-          <div className="dp-ai-note">
-            <PRIcon name="Sparkles" size={12} color="#0066FF" />
-            {patent.summaryMd
-              ? "AI가 명세서 원문에서 추출한 요약 · Claude Haiku 4.5"
-              : "요약 준비 중 — 명세서 기반 요약이 채워지면 이 영역에 표시됩니다"}
-          </div>
-          <div className="md">{renderMarkdown(summaryMd)}</div>
+          {patent.adminNote ? (
+            <>
+              <div className="dp-ai-note">
+                <PRIcon name="Info" size={12} color="#0066FF" />
+                관리자 메모 — 변리사가 직접 작성한 검토 요약입니다
+              </div>
+              <div className="md">{renderMarkdown(patent.adminNote)}</div>
+            </>
+          ) : (
+            <>
+              <div className="dp-ai-note">
+                <PRIcon name="Sparkles" size={12} color="#0066FF" />
+                {patent.summaryMd
+                  ? "AI가 명세서 원문에서 추출한 요약 · Claude Haiku 4.5"
+                  : "요약 준비 중 — 명세서 기반 요약이 채워지면 이 영역에 표시됩니다"}
+              </div>
+              <div className="md">{renderMarkdown(summaryMd)}</div>
+            </>
+          )}
           <TranslationSection descriptionKo={patent.descriptionKo} hasOriginal={!!patent.description} />
         </div>
       </div>

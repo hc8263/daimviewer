@@ -8,7 +8,7 @@ import type { PatentView } from "@/lib/patents";
 
 export function AdminPanel({ patents }: { patents: PatentView[] }) {
   const router = useRouter();
-  const [tab, setTab] = React.useState<"upload" | "notes">("upload");
+  const [tab, setTab] = React.useState<"upload" | "notes" | "models">("upload");
 
   const logout = async () => {
     await fetch("/api/admin/login", { method: "DELETE" });
@@ -26,6 +26,9 @@ export function AdminPanel({ patents }: { patents: PatentView[] }) {
           <div className={`nav-item ${tab === "notes" ? "active" : ""}`} onClick={() => setTab("notes")}>
             <PRIcon name="MessageSquare" size={14} />관리자 메모
           </div>
+          <div className={`nav-item ${tab === "models" ? "active" : ""}`} onClick={() => setTab("models")}>
+            <PRIcon name="Bot" size={14} />LLM 모델 비교
+          </div>
           <div style={{ flex: 1 }} />
           <Link href="/" className="nav-item">
             <PRIcon name="ExternalLink" size={14} />검토 화면으로
@@ -35,7 +38,9 @@ export function AdminPanel({ patents }: { patents: PatentView[] }) {
           </div>
         </aside>
         <main className="admin-main">
-          {tab === "upload" ? <UploadTab /> : <NotesTab patents={patents} />}
+          {tab === "upload" && <UploadTab />}
+          {tab === "notes" && <NotesTab patents={patents} />}
+          {tab === "models" && <ModelsTab />}
         </main>
       </div>
     </div>
@@ -134,21 +139,50 @@ function NotesTab({ patents }: { patents: PatentView[] }) {
   );
 }
 
+function buildNoteTemplate(patent: PatentView): string {
+  return `## 발명의 명칭
+${patent.fileTitle}
+
+## 기술 분야
+
+
+## 해결 과제
+-
+
+## 해결 수단
+
+
+## 핵심 구성요소
+1.
+2.
+
+## 적용 가능성
+**검토 의견:** `;
+}
+
 function NoteEditor({ patent }: { patent: PatentView }) {
-  const [val, setVal] = React.useState(patent.adminNote ?? "");
+  const router = useRouter();
+  const template = React.useMemo(() => buildNoteTemplate(patent), [patent]);
+  const [val, setVal] = React.useState(patent.adminNote ?? template);
   const [busy, setBusy] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
 
   const save = async () => {
     setBusy(true);
     setSaved(false);
+    const trimmed = val.trim();
+    const next = !trimmed || trimmed === template.trim() ? null : val;
     try {
       const res = await fetch("/api/admin/note", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wipsonKey: patent.wipsonKey, adminNote: val || null }),
+        body: JSON.stringify({ wipsonKey: patent.wipsonKey, adminNote: next }),
       });
-      if (res.ok) setSaved(true);
+      if (res.ok) {
+        setSaved(true);
+        if (next === null) setVal(template);
+        router.refresh();
+      }
     } finally {
       setBusy(false);
     }
@@ -174,3 +208,203 @@ function NoteEditor({ patent }: { patent: PatentView }) {
     </div>
   );
 }
+
+type ModelSpec = {
+  id: string;
+  vendor: string;
+  context: string;
+  ttft: string;
+  tps: string;
+  inputPrice: number;   // $/M input tokens
+  outputPrice: number;  // $/M output tokens
+  cacheRead: number | null;
+  cacheWrite: number | null;
+  imagePrice: string | null;
+  pros: string[];
+  cons: string[];
+  bestFor: string;
+};
+
+const MODEL_SPECS: ModelSpec[] = [
+  {
+    id: "deepseek/deepseek-v4-flash",
+    vendor: "DeepSeek",
+    context: "1M",
+    ttft: "0.6s",
+    tps: "131 tps",
+    inputPrice: 0.14,
+    outputPrice: 0.28,
+    cacheRead: 0.0,
+    cacheWrite: null,
+    imagePrice: null,
+    pros: [
+      "압도적인 가성비 — 4종 중 입력가 최저, 출력가도 최저 수준",
+      "1M 컨텍스트로 명세서 전문 전체 투입 가능",
+      "캐시 읽기 무료 ($0.0/M) — 같은 특허에 반복 질의 시 사실상 무료",
+    ],
+    cons: [
+      "한국어 자연스러움/뉘앙스는 Claude·Gemini 대비 다소 떨어짐",
+      "이미지 입력 미지원 — 명세서 도면 직접 분석 불가",
+      "TPS 131로 4종 중 가장 느린 편(체감은 무난)",
+    ],
+    bestFor: "대량 일괄 검토 · 비용에 가장 민감한 워크로드",
+  },
+  {
+    id: "google/gemini-2.5-flash",
+    vendor: "Google",
+    context: "1M",
+    ttft: "0.4s",
+    tps: "191 tps",
+    inputPrice: 0.30,
+    outputPrice: 2.50,
+    cacheRead: 0.03,
+    cacheWrite: null,
+    imagePrice: "$35.00/K + 입력 토큰",
+    pros: [
+      "TTFT 0.4s로 가장 빠른 첫 응답 — 인터랙티브 UX에 유리",
+      "1M 컨텍스트 + 191 tps로 긴 명세서를 빠르게 토해냄",
+      "이미지/도면 입력 지원",
+    ],
+    cons: [
+      "출력가 $2.50/M — DeepSeek 대비 약 9배",
+      "장문 추론 시 사실 누락(생략) 경향이 있어 검증 필요",
+    ],
+    bestFor: "실시간 대화 응답 속도 우선 · 도면 포함 분석",
+  },
+  {
+    id: "anthropic/claude-haiku-4.5",
+    vendor: "Anthropic",
+    context: "200K",
+    ttft: "0.5s",
+    tps: "113 tps",
+    inputPrice: 1.00,
+    outputPrice: 5.00,
+    cacheRead: 0.10,
+    cacheWrite: 1.25,
+    imagePrice: "$10.00/K + 입력 토큰",
+    pros: [
+      "한국어/특허 용어 이해도가 가장 높음 — 변리사 검토 품질 우수",
+      "지시 준수율(instruction following) 강력 — 인용 규칙·근거 기반 응답 준수",
+      "프롬프트 캐싱 활용 시 같은 특허 반복 질의가 효율적",
+    ],
+    cons: [
+      "4종 중 가장 비쌈 (입력 $1.00, 출력 $5.00/M)",
+      "컨텍스트 200K — 1M 모델에 비해 명세서가 매우 길면 자름 발생 가능",
+    ],
+    bestFor: "최종 보고용 정밀 검토 · 한국어 표현 품질 중시",
+  },
+  {
+    id: "openai/gpt-5-mini",
+    vendor: "OpenAI",
+    context: "400K",
+    ttft: "4.3s",
+    tps: "405 tps",
+    inputPrice: 0.25,
+    outputPrice: 2.00,
+    cacheRead: 0.03,
+    cacheWrite: null,
+    imagePrice: "$10.00/K + 입력 토큰",
+    pros: [
+      "TPS 405로 한 번 시작되면 가장 빠르게 장문을 출력",
+      "범용 추론 안정성 — 코드/표/리스트 정리에 강점",
+      "이미지 입력 지원, 400K 컨텍스트로 무난",
+    ],
+    cons: [
+      "TTFT 4.3s — 첫 토큰까지 체감 지연이 큼(스트리밍 UI에서 답답함)",
+      "한국어 결과물은 Claude 대비 다소 기계적",
+    ],
+    bestFor: "장문 보고서 일괄 생성 · 첫 응답 지연 허용 가능 시",
+  },
+];
+
+function fmtUsd(v: number | null) {
+  if (v === null) return "—";
+  if (v === 0) return "$0";
+  return `$${v.toFixed(2)}`;
+}
+
+// 검토자 한 번의 질의를 가정한 예시 비용:
+// 입력 60k 토큰(명세서) + 출력 1k 토큰.
+function estimatePerQuery(spec: ModelSpec) {
+  const inputCost = (60_000 / 1_000_000) * spec.inputPrice;
+  const outputCost = (1_000 / 1_000_000) * spec.outputPrice;
+  return inputCost + outputCost;
+}
+
+function ModelsTab() {
+  const cheapest = MODEL_SPECS.reduce((a, b) => estimatePerQuery(a) < estimatePerQuery(b) ? a : b);
+  return (
+    <section className="admin-card">
+      <h2>LLM 모델 비교</h2>
+      <p className="admin-help">
+        챗봇에서 선택 가능한 모델의 스펙·비용·장단점을 비교합니다. 가격은 Vercel AI Gateway 기준 $/1M tokens.
+        하단 예시 비용은 <strong>입력 60K + 출력 1K 토큰</strong>(특허 1건 질의 가정)으로 계산했습니다.
+      </p>
+
+      <div className="model-grid">
+        {MODEL_SPECS.map((m) => {
+          const perQuery = estimatePerQuery(m);
+          const isCheapest = m.id === cheapest.id;
+          return (
+            <div key={m.id} className={`model-card ${isCheapest ? "cheapest" : ""}`}>
+              <div className="model-card-head">
+                <div>
+                  <div className="model-vendor">{m.vendor}</div>
+                  <div className="model-id">{m.id}</div>
+                </div>
+                {isCheapest && <span className="badge-cheapest">최저가</span>}
+              </div>
+
+              <div className="model-specs">
+                <div><span>컨텍스트</span><strong>{m.context}</strong></div>
+                <div><span>TTFT</span><strong>{m.ttft}</strong></div>
+                <div><span>속도</span><strong>{m.tps}</strong></div>
+              </div>
+
+              <table className="model-price">
+                <tbody>
+                  <tr><td>입력</td><td>{fmtUsd(m.inputPrice)}/M</td></tr>
+                  <tr><td>출력</td><td>{fmtUsd(m.outputPrice)}/M</td></tr>
+                  <tr><td>캐시 읽기</td><td>{fmtUsd(m.cacheRead)}/M</td></tr>
+                  <tr><td>캐시 쓰기</td><td>{fmtUsd(m.cacheWrite)}/M</td></tr>
+                  <tr><td>이미지</td><td>{m.imagePrice ?? "—"}</td></tr>
+                  <tr className="row-total">
+                    <td>1건 질의 예상</td>
+                    <td><strong>${perQuery.toFixed(5)}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="model-pros-cons">
+                <div className="pros">
+                  <div className="ph">장점</div>
+                  <ul>{m.pros.map((p, i) => <li key={i}>{p}</li>)}</ul>
+                </div>
+                <div className="cons">
+                  <div className="ph">단점</div>
+                  <ul>{m.cons.map((c, i) => <li key={i}>{c}</li>)}</ul>
+                </div>
+              </div>
+
+              <div className="model-bestfor">
+                <PRIcon name="Sparkles" size={12} color="#0066FF" />
+                <span>{m.bestFor}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="model-summary">
+        <h3>요약 권장</h3>
+        <ul>
+          <li><strong>기본 워크로드</strong> — DeepSeek V4 Flash. 가격이 압도적이고 1M 컨텍스트로 명세서 전체 분석 가능.</li>
+          <li><strong>응답 체감 속도</strong> — Gemini 2.5 Flash. TTFT 0.4s로 가장 빠른 첫 토큰.</li>
+          <li><strong>최종 보고 품질</strong> — Claude Haiku 4.5. 한국어/특허 용어 이해도 최상.</li>
+          <li><strong>긴 보고서 자동 작성</strong> — GPT-5 Mini. TPS 405로 본문 생성이 빠름(첫 응답 지연 감수).</li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+

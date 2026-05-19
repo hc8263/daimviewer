@@ -2,8 +2,11 @@
 import React from "react";
 import { PRIcon } from "./icons";
 import type { PatentView } from "@/lib/patents";
+import { CHAT_MODELS, DEFAULT_CHAT_MODEL, isChatModel, type ChatModelId } from "@/lib/chatModels";
 
 type Msg = { role: "user" | "assistant"; text: string };
+
+const MODEL_STORAGE_KEY = "daimviewer.chat.model";
 
 function escapeAndFormat(text: string): string {
   return text
@@ -19,7 +22,20 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
   const [messages, setMessages] = React.useState<Msg[]>([]);
   const [draft, setDraft] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const [model, setModel] = React.useState<ChatModelId>(DEFAULT_CHAT_MODEL);
   const msgsRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(MODEL_STORAGE_KEY);
+      if (isChatModel(stored)) setModel(stored);
+    } catch { /* ignore */ }
+  }, []);
+
+  const onChangeModel = (next: ChatModelId) => {
+    setModel(next);
+    try { window.localStorage.setItem(MODEL_STORAGE_KEY, next); } catch { /* ignore */ }
+  };
 
   // Load shared conversation from the server whenever the active patent changes.
   React.useEffect(() => {
@@ -68,6 +84,7 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           wipsonKey: patent.wipsonKey,
+          model,
           messages: history.map((m) => ({ role: m.role, content: m.text })),
         }),
       });
@@ -110,6 +127,17 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
         <div className="chat-header">
           <PRIcon name="Bot" size={16} color="#0066FF" />
           AI 검토 도우미
+          <select
+            className="chat-model-select"
+            value={model}
+            onChange={(e) => onChangeModel(e.target.value as ChatModelId)}
+            disabled={pending}
+            title="응답 생성에 사용할 LLM 모델"
+          >
+            {CHAT_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>{m.label}</option>
+            ))}
+          </select>
           <span style={{ flex: 1 }} />
           <button
             className="pr-btn pr-btn-default pr-btn-sm"

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { streamText, type ModelMessage } from "ai";
 import { getPatent, resolveSummary } from "@/lib/patents";
 import { sql } from "@/lib/db";
+import { DEFAULT_CHAT_MODEL, isChatModel } from "@/lib/chatModels";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -48,10 +49,12 @@ export async function POST(req: NextRequest) {
   if (!body?.wipsonKey || !Array.isArray(body?.messages)) {
     return new Response("wipsonKey and messages required", { status: 400 });
   }
-  const { wipsonKey, messages } = body as {
+  const { wipsonKey, messages, model: requestedModel } = body as {
     wipsonKey: string;
     messages: Array<{ role: "user" | "assistant"; content: string }>;
+    model?: string;
   };
+  const model = isChatModel(requestedModel) ? requestedModel : DEFAULT_CHAT_MODEL;
 
   const patent = await getPatent(wipsonKey);
   if (!patent) return new Response("patent not found", { status: 404 });
@@ -85,8 +88,8 @@ export async function POST(req: NextRequest) {
   }
 
   const result = streamText({
-    // Route through Vercel AI Gateway (AI_GATEWAY_API_KEY).
-    model: "deepseek/deepseek-v4-flash",
+    // Route through Vercel AI Gateway (AI_GATEWAY_API_KEY). 사용자가 UI에서 선택.
+    model,
     system: systemText,
     messages: messages.map((m) => ({ role: m.role, content: m.content })) as ModelMessage[],
     onError({ error }) {
