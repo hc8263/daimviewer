@@ -34,7 +34,19 @@ export function DetailPage({ patent, patents, summaryMd }: {
   const router = useRouter();
   const [items, setItems] = React.useState<PatentView[]>(patents);
   React.useEffect(() => setItems(patents), [patents]);
-  const activePatent = items.find((p) => p.wipsonKey === patent.wipsonKey) ?? patent;
+  const activePatent = React.useMemo(() => {
+    const fromList = items.find((p) => p.wipsonKey === patent.wipsonKey);
+    if (!fromList) return patent;
+    // listPatents() masks heavy columns (description / description_ko / summary_md)
+    // to null for payload size. Restore them from the full `patent` prop so the
+    // detail panel can render the original text and Korean translation.
+    return {
+      ...fromList,
+      description: patent.description,
+      descriptionKo: patent.descriptionKo,
+      summaryMd: patent.summaryMd ?? fromList.summaryMd,
+    };
+  }, [items, patent]);
   const [decision, setDecisionState] = React.useState<string | null>(patent.reviewStatus);
   const [leftW, setLeftW] = React.useState(() => readStored("pr.leftW", LEFT_DEFAULT, LEFT_MIN, LEFT_MAX));
   const [rightW, setRightW] = React.useState(() => readStored("pr.rightW", RIGHT_DEFAULT, RIGHT_MIN, RIGHT_MAX));

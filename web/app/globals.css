@@ -1097,7 +1097,7 @@ button { font: inherit; cursor: pointer; }
   font-size: 12px; font-weight: 500; color: var(--pr-fg-muted);
   flex-wrap: wrap;
 }
-.dp-cnt-header .meta-row > span { white-space: nowrap; }
+.dp-cnt-header .meta-row > span { min-width: 0; word-break: break-word; overflow-wrap: anywhere; }
 .dp-cnt-header .meta-row .lbl { color: var(--pr-fg-faint); font-weight: 500; margin-right: 6px; }
 .dp-cnt-header .meta-row .val { color: var(--pr-fg); font-weight: 600; }
 
