@@ -173,12 +173,12 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
             </>
           ) : (
             <>
-              <div className="dp-ai-note">
-                <PRIcon name="Sparkles" size={12} color="#0066FF" />
-                {patent.summaryMd
-                  ? "AI가 명세서 원문에서 추출한 요약 · Claude Haiku 4.5"
-                  : "요약 준비 중 — 명세서 기반 요약이 채워지면 이 영역에 표시됩니다"}
-              </div>
+              {!patent.summaryMd && (
+                <div className="dp-ai-note">
+                  <PRIcon name="Sparkles" size={12} color="#0066FF" />
+                  요약 준비 중 — 명세서 기반 요약이 채워지면 이 영역에 표시됩니다
+                </div>
+              )}
               <div className="md">{renderMarkdown(summaryMd)}</div>
             </>
           )}

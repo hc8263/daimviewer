@@ -1178,7 +1178,7 @@ button { font: inherit; cursor: pointer; }
   margin-bottom: 4px;
 }
 .md li::marker {
-  color: var(--pr-fg-faint);
+  color: inherit;
 }
 .md strong {
   color: var(--pr-fg-strong);
