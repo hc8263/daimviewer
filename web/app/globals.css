@@ -1218,6 +1218,11 @@ button { font: inherit; cursor: pointer; }
 .md li::marker {
   color: inherit;
 }
+.md li > ul, .md li > ol {
+  margin: 4px 0 4px 0;
+}
+.md li > ul { list-style-type: circle; }
+.md li > ul > li > ul { list-style-type: square; }
 .md strong {
   color: var(--pr-fg-strong);
   font-weight: 700;
