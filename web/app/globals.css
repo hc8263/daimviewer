@@ -780,6 +780,42 @@ button { font: inherit; cursor: pointer; }
 .lp-chip .val { font-weight: 600; }
 .lp-chip .x { margin-left: 2px; opacity: 0.6; }
 
+.lp-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: #fff;
+  border: 1px solid var(--pr-divider);
+  border-radius: 6px;
+  min-width: 260px;
+  color: var(--pr-fg-muted);
+}
+.lp-search:focus-within {
+  border-color: var(--pr-action);
+  box-shadow: 0 0 0 2px rgba(0,102,255,0.12);
+}
+.lp-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--pr-fg);
+  font-family: inherit;
+  min-width: 0;
+}
+.lp-search input::placeholder { color: var(--pr-fg-muted); }
+.lp-search-clear {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--pr-fg-muted);
+  display: inline-flex;
+}
+.lp-search-clear:hover { color: var(--pr-fg); }
+
 /* Table */
 .lp-table {
   flex: 1;
@@ -1176,6 +1212,8 @@ button { font: inherit; cursor: pointer; }
 }
 .md li {
   margin-bottom: 4px;
+  font-weight: 500;
+  color: var(--pr-fg);
 }
 .md li::marker {
   color: inherit;

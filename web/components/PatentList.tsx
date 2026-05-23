@@ -15,6 +15,7 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
   });
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [sort, setSort] = React.useState({ col: "appDate" as keyof PatentView, dir: "desc" as "asc" | "desc" });
+  const [query, setQuery] = React.useState("");
 
   // Visible pool: by default, exclude deleted; if "삭제됨" tab, show only excluded
   const pool = items.filter((p) => filter.excluded ? p.excluded : !p.excluded);
@@ -34,6 +35,25 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
   if (filter.classifier) rows = rows.filter((p) => p.classifier === filter.classifier);
   if (filter.reviewer) rows = rows.filter((p) => p.reviewer === filter.reviewer);
   if (filter.country) rows = rows.filter((p) => p.country === filter.country);
+  if (query.trim()) {
+    const q = query.trim().toLowerCase();
+    const tokens = q.split(/\s+/).filter(Boolean);
+    rows = rows.filter((p) => {
+      const composite = `${p.country || ""}_${p.publicationNo || ""}`.toLowerCase();
+      const hay = [
+        p.wipsonKey,
+        p.fileTitle,
+        p.titleKo,
+        p.applicant,
+        p.inventor,
+        p.publicationNo,
+        p.applicationNo,
+        p.registrationNo,
+        composite,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return tokens.every((t) => hay.includes(t));
+    });
+  }
 
   rows = [...rows].sort((a, b) => {
     const va = (a[sort.col] ?? "") as string;
@@ -173,6 +193,21 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                     onClick={() => setFilter((f) => ({ ...f, country: f.country === "KR" ? null : "KR" }))}>
               국가 <span className="val">{filter.country || "전체"}</span><PRIcon name="ChevronDown" size={12} />
             </button>
+            <span style={{ width: 1, height: 20, background: "var(--pr-divider)", margin: "0 4px" }} />
+            <div className="lp-search">
+              <PRIcon name="Search" size={13} />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="검색: CN_115991160, 제목, 출원인…"
+              />
+              {query && (
+                <button type="button" className="lp-search-clear" onClick={() => setQuery("")} aria-label="검색어 지우기">
+                  <PRIcon name="X" size={12} />
+                </button>
+              )}
+            </div>
             <div style={{ flex: 1 }} />
             <span style={{ fontSize: 12, color: "var(--pr-fg-muted)" }}>정렬:</span>
             <button className="lp-chip" onClick={() => setSort((s) => ({ col: "appDate", dir: s.dir === "desc" ? "asc" : "desc" }))}>
