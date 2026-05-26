@@ -243,7 +243,7 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                   <th>제목 · 출원인</th>
                   <th>분류</th>
                   <th><span className="sortable">출원일 <PRIcon name="ChevronDown" size={10} /></span></th>
-                  <th>공개일</th>
+                  <th>공개번호</th>
                   <th>검토자</th>
                   <th>상태</th>
                   <th>검토일</th>

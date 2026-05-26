@@ -156,7 +156,7 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
           {patent.applicant && <span><span className="lbl">출원인</span><span className="val">{patent.applicant}</span></span>}
           {patent.inventor && <span><span className="lbl">발명자</span><span className="val">{patent.inventor}</span></span>}
           {patent.appDate && <span><span className="lbl">출원일</span><span className="val mono">{patent.appDate}</span></span>}
-          {patent.pubDate && <span><span className="lbl">공개일</span><span className="val mono">{patent.pubDate}</span></span>}
+          {patent.pubDate && <span><span className="lbl">공개번호</span><span className="val mono">{patent.pubDate}</span></span>}
         </div>
       </div>
 
