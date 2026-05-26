@@ -2247,10 +2247,18 @@ button { font: inherit; cursor: pointer; }
 /* ── Detail page (중앙 본문) ─────────────────────────────────────────── */
 [data-theme="dark"] .dp-shell { background: var(--pr-bg); }
 [data-theme="dark"] .dp-center,
-[data-theme="dark"] .dp-body,
-[data-theme="dark"] .dp-body-inner {
+[data-theme="dark"] .dp-body {
   background: var(--pr-bg) !important;
   color: var(--pr-fg);
+}
+[data-theme="dark"] .dp-body-inner {
+  background: var(--pr-surface) !important;
+  color: var(--pr-fg);
+  border: 1px solid var(--pr-border);
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-top: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.20), 0 8px 24px -4px rgba(0,0,0,0.28);
 }
 [data-theme="dark"] .dp-cnt-header {
   background: linear-gradient(180deg, var(--pr-surface) 0%, rgba(20,23,29,0.85) 100%) !important;
