@@ -148,29 +148,19 @@ export function resolveSummary(p: PatentView): string {
   return p.summaryMd || getMockSummary(p);
 }
 
-// "이해하기 쉬운 ver" — bundled JSON during test phase; later moves to DB column.
-// easy_summaries.json is keyed by `{ctry}_{doc_id}`; UI/DB key is `wipson_key`
-// (= scraped JSON's `skey`). We bundle a slim skey lookup so prod builds work.
-import easySummariesData from "@/data/easy_summaries.json";
-import scrapedSkeysData from "@/data/scraped_skeys.json";
-
-type EasyRec = { summary?: string; error?: string };
-const easyMap = easySummariesData as Record<string, EasyRec>;
-const skeyMap = scrapedSkeysData as Record<string, { skey?: string }>;
-
-const easyByWipson: Record<string, EasyRec> = (() => {
-  const out: Record<string, EasyRec> = {};
-  for (const [easyKey, rec] of Object.entries(easyMap)) {
-    const skey = skeyMap[easyKey]?.skey;
-    if (skey) out[skey] = rec;
-  }
-  return out;
-})();
-
+// "이해하기 쉬운 ver" — stored in patents.easy_summary_md.
+// 적재 스크립트: scripts/upload_easy_summaries_json.ts
 export async function getEasySummary(wipsonKey: string): Promise<string | null> {
-  const rec = easyByWipson[wipsonKey];
-  if (!rec || rec.error) return null;
-  return rec.summary || null;
+  if (!hasDb || !sql) return null;
+  try {
+    const rows = (await sql`
+      select easy_summary_md from patents where wipson_key = ${wipsonKey} limit 1
+    `) as unknown as { easy_summary_md: string | null }[];
+    return rows[0]?.easy_summary_md || null;
+  } catch (err) {
+    console.warn("[patents] easy summary query failed:", err);
+    return null;
+  }
 }
 
 export { MOCK_PATENTS, MOCK_SUMMARIES };
