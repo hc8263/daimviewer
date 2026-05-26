@@ -149,27 +149,43 @@ export function resolveSummary(p: PatentView): string {
 }
 
 // "이해하기 쉬운 ver" — file-backed during test phase; later moves to DB column.
-// Reads project-root data/easy_summaries.json on each page render (cached by
-// Next.js `revalidate` on the page itself).
-let _easyCache: { mtimeMs: number; map: Record<string, { summary?: string; error?: string }> } | null = null;
-async function loadEasy(): Promise<Record<string, { summary?: string; error?: string }>> {
+// easy_summaries.json is keyed by `{ctry}_{doc_id}`, but the DB / UI key is
+// `wipson_key` (= scraped JSON's `skey`). We build a wipsonKey → easyKey
+// mapping by joining against descriptions_scraped.json.
+let _easyCache: {
+  mtimeMs: number;
+  byWipson: Record<string, { summary?: string; error?: string }>;
+} | null = null;
+
+async function loadEasyByWipson(): Promise<Record<string, { summary?: string; error?: string }>> {
   const fs = await import("node:fs/promises");
   const path = await import("node:path");
-  const p = path.resolve(process.cwd(), "..", "data", "easy_summaries.json");
+  const dataDir = path.resolve(process.cwd(), "..", "data");
+  const easyPath = path.join(dataDir, "easy_summaries.json");
+  const scrapedPath = path.join(dataDir, "descriptions_scraped.json");
   try {
-    const stat = await fs.stat(p);
-    if (_easyCache && _easyCache.mtimeMs === stat.mtimeMs) return _easyCache.map;
-    const raw = await fs.readFile(p, "utf-8");
-    const map = JSON.parse(raw) as Record<string, { summary?: string; error?: string }>;
-    _easyCache = { mtimeMs: stat.mtimeMs, map };
-    return map;
+    const easyStat = await fs.stat(easyPath);
+    if (_easyCache && _easyCache.mtimeMs === easyStat.mtimeMs) return _easyCache.byWipson;
+    const [easyRaw, scrapedRaw] = await Promise.all([
+      fs.readFile(easyPath, "utf-8"),
+      fs.readFile(scrapedPath, "utf-8"),
+    ]);
+    const easy = JSON.parse(easyRaw) as Record<string, { summary?: string; error?: string }>;
+    const scraped = JSON.parse(scrapedRaw) as Record<string, { skey?: string }>;
+    const byWipson: Record<string, { summary?: string; error?: string }> = {};
+    for (const [easyKey, rec] of Object.entries(easy)) {
+      const skey = scraped[easyKey]?.skey;
+      if (skey) byWipson[skey] = rec;
+    }
+    _easyCache = { mtimeMs: easyStat.mtimeMs, byWipson };
+    return byWipson;
   } catch {
     return {};
   }
 }
 
 export async function getEasySummary(wipsonKey: string): Promise<string | null> {
-  const m = await loadEasy();
+  const m = await loadEasyByWipson();
   const rec = m[wipsonKey];
   if (!rec || rec.error) return null;
   return rec.summary || null;
