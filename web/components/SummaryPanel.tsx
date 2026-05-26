@@ -108,7 +108,7 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
   decision: string | null;
   setDecision: (d: string | null) => void;
 }) {
-  const [viewMode, setViewMode] = React.useState<"easy" | "spec">("spec");
+  const [viewMode, setViewMode] = React.useState<"easy" | "spec">("easy");
 
   const save = async (d: string) => {
     const next = decision === d ? null : d;
