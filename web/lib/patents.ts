@@ -148,4 +148,31 @@ export function resolveSummary(p: PatentView): string {
   return p.summaryMd || getMockSummary(p);
 }
 
+// "이해하기 쉬운 ver" — file-backed during test phase; later moves to DB column.
+// Reads project-root data/easy_summaries.json on each page render (cached by
+// Next.js `revalidate` on the page itself).
+let _easyCache: { mtimeMs: number; map: Record<string, { summary?: string; error?: string }> } | null = null;
+async function loadEasy(): Promise<Record<string, { summary?: string; error?: string }>> {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const p = path.resolve(process.cwd(), "..", "data", "easy_summaries.json");
+  try {
+    const stat = await fs.stat(p);
+    if (_easyCache && _easyCache.mtimeMs === stat.mtimeMs) return _easyCache.map;
+    const raw = await fs.readFile(p, "utf-8");
+    const map = JSON.parse(raw) as Record<string, { summary?: string; error?: string }>;
+    _easyCache = { mtimeMs: stat.mtimeMs, map };
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+export async function getEasySummary(wipsonKey: string): Promise<string | null> {
+  const m = await loadEasy();
+  const rec = m[wipsonKey];
+  if (!rec || rec.error) return null;
+  return rec.summary || null;
+}
+
 export { MOCK_PATENTS, MOCK_SUMMARIES };

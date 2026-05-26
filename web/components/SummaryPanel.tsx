@@ -101,12 +101,15 @@ function CommentBox({ wipsonKey, initial }: { wipsonKey: string; initial: string
   );
 }
 
-export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
+export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDecision }: {
   patent: PatentView;
   summaryMd: string;
+  easySummaryMd?: string | null;
   decision: string | null;
   setDecision: (d: string | null) => void;
 }) {
+  const [viewMode, setViewMode] = React.useState<"easy" | "spec">("spec");
+
   const save = async (d: string) => {
     const next = decision === d ? null : d;
     setDecision(next);
@@ -126,6 +129,26 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
       <div className="dp-cnt-header">
         <div className="row">
           <h1 className="h1">{patent.fileTitle}</h1>
+          <div className="dp-view-toggle" role="tablist" aria-label="요약 보기 방식">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === "easy"}
+              className={viewMode === "easy" ? "on" : ""}
+              onClick={() => setViewMode("easy")}
+            >
+              이해하기 쉬운 ver
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === "spec"}
+              className={viewMode === "spec" ? "on" : ""}
+              onClick={() => setViewMode("spec")}
+            >
+              명세서 중심의 요약
+            </button>
+          </div>
           <a href={patent.sourceUrl} target="_blank" rel="noreferrer" className="pr-btn pr-btn-default pr-btn-sm" style={{ flexShrink: 0 }}>
             <PRIcon name="ExternalLink" size={13} />원문 보기
           </a>
@@ -163,7 +186,22 @@ export function SummaryPanel({ patent, summaryMd, decision, setDecision }: {
       <div className="dp-body">
         <div className="dp-body-inner">
           <CommentBox wipsonKey={patent.wipsonKey} initial={patent.comment} />
-          {patent.adminNote ? (
+          {viewMode === "easy" ? (
+            easySummaryMd ? (
+              <>
+                <div className="dp-ai-note">
+                  <PRIcon name="Sparkles" size={12} color="#0066FF" />
+                  이해하기 쉬운 ver — 비전공자도 이해할 수 있도록 풀어 쓴 요약입니다
+                </div>
+                <div className="md">{renderMarkdown(easySummaryMd)}</div>
+              </>
+            ) : (
+              <div className="dp-ai-note">
+                <PRIcon name="Sparkles" size={12} color="#0066FF" />
+                이해하기 쉬운 ver — 아직 생성되지 않았습니다
+              </div>
+            )
+          ) : patent.adminNote ? (
             <>
               <div className="dp-ai-note">
                 <PRIcon name="Info" size={12} color="#0066FF" />

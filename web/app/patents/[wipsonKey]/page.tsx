@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPatent, resolveSummary } from "@/lib/patents";
+import { getPatent, resolveSummary, getEasySummary } from "@/lib/patents";
 import { PatentDetailContent } from "@/components/PatentDetailContent";
 
 // Cache per-patent fetch — heavy fields (description, summary_md) are static
@@ -12,5 +12,6 @@ export default async function Page({ params }: { params: Promise<{ wipsonKey: st
   const patent = await getPatent(key);
   if (!patent) notFound();
   const summaryMd = resolveSummary(patent);
-  return <PatentDetailContent patent={patent} summaryMd={summaryMd} />;
+  const easySummaryMd = await getEasySummary(patent.wipsonKey);
+  return <PatentDetailContent patent={patent} summaryMd={summaryMd} easySummaryMd={easySummaryMd} />;
 }

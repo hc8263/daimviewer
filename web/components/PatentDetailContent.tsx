@@ -21,7 +21,7 @@ function readStored(key: string, fallback: number, min: number, max: number) {
   return clamp(v, min, max);
 }
 
-export function PatentDetailContent({ patent, summaryMd }: { patent: PatentView; summaryMd: string }) {
+export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { patent: PatentView; summaryMd: string; easySummaryMd?: string | null }) {
   const { items, updateLocal } = usePatents();
 
   // Merge lightweight metadata from the shared list with the heavy fields
@@ -67,7 +67,7 @@ export function PatentDetailContent({ patent, summaryMd }: { patent: PatentView;
 
   return (
     <>
-      <SummaryPanel patent={activePatent} summaryMd={summaryMd} decision={decision} setDecision={setDecision} />
+      <SummaryPanel patent={activePatent} summaryMd={summaryMd} easySummaryMd={easySummaryMd ?? null} decision={decision} setDecision={setDecision} />
       <Splitter onResize={onResizeRight} />
       <div className="dp-chat-right" style={{ width: rightW }} suppressHydrationWarning>
         <ChatPanel patent={activePatent} />
