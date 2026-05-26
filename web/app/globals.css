@@ -2227,7 +2227,7 @@ button { font: inherit; cursor: pointer; }
 }
 [data-theme="dark"] .dp-rail-item:hover { background: var(--pr-surface-alt); }
 [data-theme="dark"] .dp-rail-item.active {
-  background: linear-gradient(90deg, rgba(122,167,255,0.16), rgba(122,167,255,0.04));
+  background: linear-gradient(90deg, rgba(122,167,255,0.36), rgba(122,167,255,0.12));
   box-shadow: inset 3px 0 0 var(--pr-action);
 }
 [data-theme="dark"] .dp-rail-item.active .top { color: var(--pr-action-strong); }
@@ -2705,7 +2705,7 @@ html:not([data-theme="dark"]) body {
 }
 :root:not([data-theme="dark"]) .dp-rail-item:hover { background: #F8FAFC; }
 :root:not([data-theme="dark"]) .dp-rail-item.active {
-  background: linear-gradient(90deg, var(--pr-action-bg), rgba(37,99,235,0.02));
+  background: linear-gradient(90deg, rgba(37,99,235,0.22), rgba(37,99,235,0.08));
   box-shadow: inset 3px 0 0 var(--pr-action);
 }
 :root:not([data-theme="dark"]) .dp-rail-item.active .top { color: var(--pr-action-strong); }
@@ -2967,36 +2967,3 @@ html:not([data-theme="dark"]) body {
   color: var(--pr-fg-muted);
 }
 
-/* =========================================================================
-   Right chat panel — card-style framing (matches center body card)
-   ========================================================================= */
-[data-theme="dark"] .dp-chat-right,
-:root:not([data-theme="dark"]) .dp-chat-right {
-  background: transparent !important;
-  border-left: none !important;
-  padding: 24px 20px 24px 4px;
-  overflow: hidden;
-  display: flex;
-}
-.dp-chat-right > .chat-shell {
-  flex: 1;
-  min-height: 0;
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Light mode card */
-:root:not([data-theme="dark"]) .dp-chat-right > .chat-shell {
-  background: var(--pr-surface);
-  border: 1px solid var(--pr-border);
-  box-shadow: var(--pr-shadow-md);
-}
-
-/* Dark mode card */
-[data-theme="dark"] .dp-chat-right > .chat-shell {
-  background: var(--pr-surface) !important;
-  border: 1px solid var(--pr-border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.20), 0 8px 24px -4px rgba(0,0,0,0.28);
-}
