@@ -2966,3 +2966,37 @@ html:not([data-theme="dark"]) body {
 :root:not([data-theme="dark"]) .pr-iconbtn[title*="다크"] {
   color: var(--pr-fg-muted);
 }
+
+/* =========================================================================
+   Right chat panel — card-style framing (matches center body card)
+   ========================================================================= */
+[data-theme="dark"] .dp-chat-right,
+:root:not([data-theme="dark"]) .dp-chat-right {
+  background: transparent !important;
+  border-left: none !important;
+  padding: 24px 20px 24px 4px;
+  overflow: hidden;
+  display: flex;
+}
+.dp-chat-right > .chat-shell {
+  flex: 1;
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Light mode card */
+:root:not([data-theme="dark"]) .dp-chat-right > .chat-shell {
+  background: var(--pr-surface);
+  border: 1px solid var(--pr-border);
+  box-shadow: var(--pr-shadow-md);
+}
+
+/* Dark mode card */
+[data-theme="dark"] .dp-chat-right > .chat-shell {
+  background: var(--pr-surface) !important;
+  border: 1px solid var(--pr-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.20), 0 8px 24px -4px rgba(0,0,0,0.28);
+}
