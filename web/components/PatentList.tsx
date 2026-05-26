@@ -219,6 +219,7 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
             <table>
               <colgroup>
                 <col style={{ width: 36 }} />
+                <col style={{ width: 44 }} />
                 <col style={{ width: 36 }} />
                 <col style={{ width: 175 }} />
                 <col style={{ width: "auto" }} />
@@ -236,6 +237,7 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                       {selected.size === rows.length && rows.length > 0 && <PRIcon name="Check" size={11} color="#fff" />}
                     </span>
                   </th>
+                  <th>#</th>
                   <th></th>
                   <th>WIPSONKEY</th>
                   <th>제목 · 출원인</th>
@@ -256,6 +258,7 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
                         {selected.has(p.wipsonKey) && <PRIcon name="Check" size={11} color="#fff" />}
                       </span>
                     </td>
+                    <td className="mono" style={{ color: "var(--pr-fg-muted)", fontVariantNumeric: "tabular-nums" }}>{p.index ?? ""}</td>
                     <td><FlagBadge country={p.country} /></td>
                     <td className="id-cell">{p.wipsonKey}</td>
                     <td className="title-cell">

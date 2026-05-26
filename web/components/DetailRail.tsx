@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { FlagBadge, StatusPill } from "./icons";
 import type { PatentView } from "@/lib/patents";
 
@@ -9,7 +9,6 @@ export function DetailRail({ active, patents, width = 260 }: {
   patents: PatentView[];
   width?: number;
 }) {
-  const router = useRouter();
   const [filter, setFilter] = React.useState<"all" | "unreviewed" | "relevant" | "maybe" | "irrelevant">("all");
   const [query, setQuery] = React.useState("");
 
@@ -69,13 +68,17 @@ export function DetailRail({ active, patents, width = 260 }: {
           <div className="dp-rail-empty">검색 결과 없음</div>
         )}
         {list.map((p) => (
-          <div
+          <Link
             key={p.wipsonKey}
+            href={`/patents/${encodeURIComponent(p.wipsonKey)}`}
+            prefetch={true}
             data-key={p.wipsonKey}
             className={`dp-rail-item ${active.wipsonKey === p.wipsonKey ? "active" : ""}`}
-            onClick={() => router.push(`/patents/${encodeURIComponent(p.wipsonKey)}`)}
           >
             <div className="top">
+              {typeof p.index === "number" && (
+                <span className="dp-rail-num">#{p.index}</span>
+              )}
               <FlagBadge country={p.country} />
               <span>{p.wipsonKey}</span>
             </div>
@@ -84,7 +87,7 @@ export function DetailRail({ active, patents, width = 260 }: {
               <StatusPill status={p.reviewStatus} />
               {p.reviewer && <span style={{ color: "var(--pr-fg-faint)" }}>· {p.reviewer}</span>}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </aside>

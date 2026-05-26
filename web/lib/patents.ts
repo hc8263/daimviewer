@@ -4,6 +4,7 @@ import { sql, hasDb, type PatentRow } from "./db";
 import { MOCK_PATENTS, MOCK_SUMMARIES, getMockSummary } from "./mock";
 
 export type PatentView = {
+  index?: number;
   wipsonKey: string;
   fileTitle: string;
   titleKo: string | null;
@@ -76,8 +77,12 @@ function rowToView(r: RowExt): PatentView {
   };
 }
 
+function assignIndices(list: PatentView[]): PatentView[] {
+  return list.map((p, i) => ({ ...p, index: i + 1 }));
+}
+
 export async function listPatents(opts?: { includeExcluded?: boolean }): Promise<PatentView[]> {
-  if (!hasDb || !sql) return MOCK_PATENTS;
+  if (!hasDb || !sql) return assignIndices(MOCK_PATENTS);
   try {
     // List view never reads description/summary_md/description_ko — skip those
     // big columns (14MB+ total across ~730 rows) so the page payload stays small.
@@ -102,10 +107,10 @@ export async function listPatents(opts?: { includeExcluded?: boolean }): Promise
         order by p.application_date desc nulls last
     `) as unknown as RowExt[];
     // Always return all rows including excluded; UI filters by default.
-    return rows.map(rowToView);
+    return assignIndices(rows.map(rowToView));
   } catch (err) {
     console.warn("[patents] DB query failed, falling back to mock:", err);
-    return MOCK_PATENTS;
+    return assignIndices(MOCK_PATENTS);
   }
 }
 

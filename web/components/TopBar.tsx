@@ -5,6 +5,33 @@ import { PRIcon } from "./icons";
 
 export type Crumb = string | { label: string; href: string };
 
+function ThemeToggle() {
+  const [theme, setTheme] = React.useState<"light" | "dark">("light");
+  React.useEffect(() => {
+    const t = (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
+    setTheme(t);
+  }, []);
+  const toggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("pr.theme", next); } catch {}
+  };
+  const isDark = theme === "dark";
+  return (
+    <button
+      type="button"
+      className="pr-iconbtn"
+      onClick={toggle}
+      title={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+      aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+      suppressHydrationWarning
+    >
+      <PRIcon name={isDark ? "Sun" : "Moon"} size={16} />
+    </button>
+  );
+}
+
 export function TopBar({ crumbs = [], rightExtra = null }: {
   crumbs?: Crumb[];
   rightExtra?: React.ReactNode;
@@ -36,6 +63,7 @@ export function TopBar({ crumbs = [], rightExtra = null }: {
       </div>
       <div className="spacer" />
       {rightExtra}
+      <ThemeToggle />
       <span className="pr-userchip">
         USER
       </span>
