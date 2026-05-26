@@ -148,45 +148,27 @@ export function resolveSummary(p: PatentView): string {
   return p.summaryMd || getMockSummary(p);
 }
 
-// "이해하기 쉬운 ver" — file-backed during test phase; later moves to DB column.
-// easy_summaries.json is keyed by `{ctry}_{doc_id}`, but the DB / UI key is
-// `wipson_key` (= scraped JSON's `skey`). We build a wipsonKey → easyKey
-// mapping by joining against descriptions_scraped.json.
-let _easyCache: {
-  mtimeMs: number;
-  byWipson: Record<string, { summary?: string; error?: string }>;
-} | null = null;
+// "이해하기 쉬운 ver" — bundled JSON during test phase; later moves to DB column.
+// easy_summaries.json is keyed by `{ctry}_{doc_id}`; UI/DB key is `wipson_key`
+// (= scraped JSON's `skey`). We bundle a slim skey lookup so prod builds work.
+import easySummariesData from "@/data/easy_summaries.json";
+import scrapedSkeysData from "@/data/scraped_skeys.json";
 
-async function loadEasyByWipson(): Promise<Record<string, { summary?: string; error?: string }>> {
-  const fs = await import("node:fs/promises");
-  const path = await import("node:path");
-  const dataDir = path.resolve(process.cwd(), "..", "data");
-  const easyPath = path.join(dataDir, "easy_summaries.json");
-  const scrapedPath = path.join(dataDir, "descriptions_scraped.json");
-  try {
-    const easyStat = await fs.stat(easyPath);
-    if (_easyCache && _easyCache.mtimeMs === easyStat.mtimeMs) return _easyCache.byWipson;
-    const [easyRaw, scrapedRaw] = await Promise.all([
-      fs.readFile(easyPath, "utf-8"),
-      fs.readFile(scrapedPath, "utf-8"),
-    ]);
-    const easy = JSON.parse(easyRaw) as Record<string, { summary?: string; error?: string }>;
-    const scraped = JSON.parse(scrapedRaw) as Record<string, { skey?: string }>;
-    const byWipson: Record<string, { summary?: string; error?: string }> = {};
-    for (const [easyKey, rec] of Object.entries(easy)) {
-      const skey = scraped[easyKey]?.skey;
-      if (skey) byWipson[skey] = rec;
-    }
-    _easyCache = { mtimeMs: easyStat.mtimeMs, byWipson };
-    return byWipson;
-  } catch {
-    return {};
+type EasyRec = { summary?: string; error?: string };
+const easyMap = easySummariesData as Record<string, EasyRec>;
+const skeyMap = scrapedSkeysData as Record<string, { skey?: string }>;
+
+const easyByWipson: Record<string, EasyRec> = (() => {
+  const out: Record<string, EasyRec> = {};
+  for (const [easyKey, rec] of Object.entries(easyMap)) {
+    const skey = skeyMap[easyKey]?.skey;
+    if (skey) out[skey] = rec;
   }
-}
+  return out;
+})();
 
 export async function getEasySummary(wipsonKey: string): Promise<string | null> {
-  const m = await loadEasyByWipson();
-  const rec = m[wipsonKey];
+  const rec = easyByWipson[wipsonKey];
   if (!rec || rec.error) return null;
   return rec.summary || null;
 }
