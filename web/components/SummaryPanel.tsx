@@ -191,7 +191,7 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
               <>
                 <div className="dp-ai-note">
                   <PRIcon name="Sparkles" size={12} color="#0066FF" />
-                  이해하기 쉬운 ver — 비전공자도 이해할 수 있도록 풀어 쓴 요약입니다
+                  이해하기 쉬운 ver
                 </div>
                 <div className="md">{renderMarkdown(easySummaryMd)}</div>
               </>
