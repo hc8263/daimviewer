@@ -24,7 +24,8 @@ async function logMessage(wipsonKey: string, role: "user" | "assistant", content
 const MAX_CONTEXT_CHARS = 600_000;
 
 function buildSystem(p: Awaited<ReturnType<typeof getPatent>>, summaryMd: string) {
-  let description = p?.description || "";
+  // 원문(description)을 적재하지 않은 특허(주로 비-KR)는 한글 번역본을 근거로 사용
+  let description = p?.description || p?.descriptionKo || "";
   if (description.length > MAX_CONTEXT_CHARS) {
     description = description.slice(0, MAX_CONTEXT_CHARS) + "\n\n[…이후 본문 잘림…]";
   }
