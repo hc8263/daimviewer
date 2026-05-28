@@ -1,8 +1,8 @@
 // LLM 모델 선택지 (Vercel AI Gateway 경유).
 // Vercel AI Gateway 모델 ID: "<provider>/<model>"
 export type ChatModelId =
-  | "deepseek/deepseek-v4-flash"
   | "google/gemini-2.5-flash"
+  | "deepseek/deepseek-v3.2"
   | "anthropic/claude-haiku-4.5"
   | "openai/gpt-5-mini";
 
@@ -14,14 +14,14 @@ export type ChatModelOption = {
 
 export const CHAT_MODELS: ChatModelOption[] = [
   {
-    id: "deepseek/deepseek-v4-flash",
-    label: "DeepSeek V4 Flash",
-    hint: "가성비 최강 · 기본",
-  },
-  {
     id: "google/gemini-2.5-flash",
     label: "Gemini 2.5 Flash",
-    hint: "긴 컨텍스트(1M) · 저렴",
+    hint: "긴 컨텍스트(1M) · 저렴 · 기본",
+  },
+  {
+    id: "deepseek/deepseek-v3.2",
+    label: "DeepSeek V3.2",
+    hint: "출력 최저가 · 컨텍스트 128K",
   },
   {
     id: "anthropic/claude-haiku-4.5",
@@ -35,7 +35,7 @@ export const CHAT_MODELS: ChatModelOption[] = [
   },
 ];
 
-export const DEFAULT_CHAT_MODEL: ChatModelId = "deepseek/deepseek-v4-flash";
+export const DEFAULT_CHAT_MODEL: ChatModelId = "google/gemini-2.5-flash";
 
 export function isChatModel(value: unknown): value is ChatModelId {
   return CHAT_MODELS.some((m) => m.id === value);

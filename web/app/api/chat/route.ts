@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
   // Mock fallback when no API key is configured: stream a canned response.
   if (!process.env.AI_GATEWAY_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-    const mock = `(개발 모드 · API 키 미설정)\n\n이 환경에서는 실제 모델 호출이 비활성화되어 있습니다.\n\n**컨텍스트 확인**\n- 특허 명칭: ${patent.fileTitle}\n- 명세서 길이: ${(patent.description || "").length.toLocaleString()}자\n\n프로덕션에서는 DeepSeek V4 Flash가 위 명세서 전문을 근거로 답변합니다.`;
+    const mock = `(개발 모드 · API 키 미설정)\n\n이 환경에서는 실제 모델 호출이 비활성화되어 있습니다.\n\n**컨텍스트 확인**\n- 특허 명칭: ${patent.fileTitle}\n- 명세서 길이: ${(patent.description || "").length.toLocaleString()}자\n\n프로덕션에서는 Gemini 2.5 Flash가 위 명세서 전문을 근거로 답변합니다.`;
     const encoder = new TextEncoder();
     return new Response(
       new ReadableStream({

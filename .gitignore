@@ -9,3 +9,4 @@ list/
 __pycache__/
 *.pyc
 .env
+.vercel
