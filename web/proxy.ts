@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const REALM = "Patent Review";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   // No password set → wide open (useful during local dev)
   const expected = process.env.SITE_PASSWORD;
   if (!expected) return NextResponse.next();
