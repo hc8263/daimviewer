@@ -182,6 +182,9 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
+              // 한글 등 IME 조합 중에는 Enter를 전송으로 처리하지 않음
+              // (그렇지 않으면 마지막 조합 글자가 입력창에 남음)
+              if (e.nativeEvent.isComposing) return;
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 send(draft);
