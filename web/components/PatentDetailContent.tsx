@@ -51,6 +51,10 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
     });
   }, [patent.wipsonKey, activePatent.reviewer, activePatent.reviewDate, updateLocal]);
 
+  const setComment = React.useCallback((note: string) => {
+    updateLocal(patent.wipsonKey, { comment: note });
+  }, [patent.wipsonKey, updateLocal]);
+
   const [rightW, setRightW] = React.useState(() => readStored("pr.rightW", RIGHT_DEFAULT, RIGHT_MIN, RIGHT_MAX));
   const onResizeRight = React.useCallback((delta: number | "reset") => {
     if (delta === "reset") {
@@ -67,7 +71,7 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
 
   return (
     <>
-      <SummaryPanel patent={activePatent} summaryMd={summaryMd} easySummaryMd={easySummaryMd ?? null} decision={decision} setDecision={setDecision} />
+      <SummaryPanel patent={activePatent} summaryMd={summaryMd} easySummaryMd={easySummaryMd ?? null} decision={decision} setDecision={setDecision} setComment={setComment} />
       <Splitter onResize={onResizeRight} />
       <div className="dp-chat-right" style={{ width: rightW }} suppressHydrationWarning>
         <ChatPanel patent={activePatent} />

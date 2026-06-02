@@ -39,7 +39,7 @@ function TranslationSection({ descriptionKo, hasOriginal }: { descriptionKo: str
   );
 }
 
-function CommentBox({ wipsonKey, initial }: { wipsonKey: string; initial: string | null }) {
+function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initial: string | null; onSaved: (note: string) => void }) {
   const [value, setValue] = React.useState(initial ?? "");
   const [status, setStatus] = React.useState<"idle" | "saving" | "saved">("idle");
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,17 +55,24 @@ function CommentBox({ wipsonKey, initial }: { wipsonKey: string; initial: string
     if (next === lastSaved.current) return;
     setStatus("saving");
     try {
-      await fetch("/api/review", {
+      const res = await fetch("/api/review", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ wipsonKey, reviewer: "USER", note: next }),
       });
+      if (!res.ok) {
+        setStatus("idle");
+        return;
+      }
       lastSaved.current = next;
       setStatus("saved");
+      // Keep the shared client cache in sync so navigating away and back
+      // shows the saved comment instead of the stale list value.
+      onSaved(next);
     } catch {
       setStatus("idle");
     }
-  }, [wipsonKey]);
+  }, [wipsonKey, onSaved]);
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value;
@@ -101,12 +108,13 @@ function CommentBox({ wipsonKey, initial }: { wipsonKey: string; initial: string
   );
 }
 
-export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDecision }: {
+export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDecision, setComment }: {
   patent: PatentView;
   summaryMd: string;
   easySummaryMd?: string | null;
   decision: string | null;
   setDecision: (d: string | null) => void;
+  setComment: (note: string) => void;
 }) {
   const [viewMode, setViewMode] = React.useState<"easy" | "spec">("easy");
 
@@ -185,7 +193,7 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
 
       <div className="dp-body">
         <div className="dp-body-inner">
-          <CommentBox wipsonKey={patent.wipsonKey} initial={patent.comment} />
+          <CommentBox wipsonKey={patent.wipsonKey} initial={patent.comment} onSaved={setComment} />
           {viewMode === "easy" ? (
             easySummaryMd ? (
               <>
