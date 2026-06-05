@@ -227,27 +227,26 @@ type ModelSpec = {
 
 const MODEL_SPECS: ModelSpec[] = [
   {
-    id: "deepseek/deepseek-v3.2",
+    id: "deepseek/deepseek-v4-pro",
     vendor: "DeepSeek",
-    context: "128K",
+    context: "1M",
     ttft: "0.6s",
     tps: "131 tps",
-    inputPrice: 0.28,
-    outputPrice: 0.42,
-    cacheRead: 0.028,
+    inputPrice: 0.43,
+    outputPrice: 0.87,
+    cacheRead: null,
     cacheWrite: null,
     imagePrice: null,
     pros: [
-      "출력가 최저 수준 — 대량 생성 워크로드에 가장 저렴",
-      "무료 등급에서도 사용 가능 (V4는 유료 크레딧 필요)",
-      "캐시 읽기가 매우 저렴 — 같은 특허 반복 질의에 유리",
+      "1M 컨텍스트 — 긴 명세서 전문 질의에 유리",
+      "출력가가 낮아 대량 생성 워크로드 비용 부담이 작음",
+      "고성능 추론 모델로 복잡한 특허 검토 질의에 적합",
     ],
     cons: [
-      "컨텍스트 128K — 긴 명세서는 뒷부분이 잘릴 수 있음",
       "한국어 자연스러움/뉘앙스는 Claude·Gemini 대비 다소 떨어짐",
       "이미지 입력 미지원 — 명세서 도면 직접 분석 불가",
     ],
-    bestFor: "출력량 많은 일괄 작업 · 비용에 가장 민감한 워크로드",
+    bestFor: "긴 명세서 분석 · 비용 효율적인 정밀 질의",
   },
   {
     id: "google/gemini-2.5-flash",
@@ -398,7 +397,7 @@ function ModelsTab() {
       <div className="model-summary">
         <h3>요약 권장</h3>
         <ul>
-          <li><strong>기본 워크로드</strong> — DeepSeek V4 Flash. 가격이 압도적이고 1M 컨텍스트로 명세서 전체 분석 가능.</li>
+          <li><strong>기본 워크로드</strong> — DeepSeek V4 Pro. 1M 컨텍스트로 명세서 전체 분석에 유리하고 비용 효율적.</li>
           <li><strong>응답 체감 속도</strong> — Gemini 2.5 Flash. TTFT 0.4s로 가장 빠른 첫 토큰.</li>
           <li><strong>최종 보고 품질</strong> — Claude Haiku 4.5. 한국어/특허 용어 이해도 최상.</li>
           <li><strong>긴 보고서 자동 작성</strong> — GPT-5 Mini. TPS 405로 본문 생성이 빠름(첫 응답 지연 감수).</li>
@@ -407,4 +406,3 @@ function ModelsTab() {
     </section>
   );
 }
-
