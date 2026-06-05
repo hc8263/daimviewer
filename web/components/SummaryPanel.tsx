@@ -188,6 +188,8 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
           {patent.inventor && <span><span className="lbl">발명자</span><span className="val">{patent.inventor}</span></span>}
           {patent.appDate && <span><span className="lbl">출원일</span><span className="val mono">{patent.appDate}</span></span>}
           {patent.pubDate && <span><span className="lbl">공개번호</span><span className="val mono">{patent.pubDate}</span></span>}
+          {patent.majorCategory && <span><span className="lbl">대분류</span><span className="val">{patent.majorCategory}</span></span>}
+          {patent.middleCategory && <span><span className="lbl">중분류</span><span className="val">{patent.middleCategory}</span></span>}
         </div>
       </div>
 

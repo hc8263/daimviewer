@@ -140,6 +140,8 @@ type ExcelRow = {
   applicants: string | null;
   inventors: string | null;
   status: string | null;
+  major_category: string | null;
+  middle_category: string | null;
   ipc_main: string | null;
   pdf_url: string | null;
   source_url: string | null;
@@ -181,10 +183,20 @@ function readExcel(): ExcelRow[] {
   const range = XLSX.utils.decode_range(ws["!ref"]!);
   const rows: ExcelRow[] = [];
   const cell = (col: string, r: number) => ws[col + r]?.v;
+  const headerCol = new Map<string, string>();
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const col = XLSX.utils.encode_col(c);
+    const label = clean(ws[col + "1"]?.v);
+    if (label) headerCol.set(label, col);
+  }
+  const byHeader = (name: string, r: number) => {
+    const col = headerCol.get(name);
+    return col ? ws[col + r]?.v : undefined;
+  };
   for (let r = 2; r <= range.e.r + 1; r++) {
     const cc = clean(cell("A", r));
     if (!cc) continue;
-    const wipson = cell("AS", r);
+    const wipson = byHeader("WIPS ON key", r) ?? cell("AS", r);
     if (wipson == null || String(wipson).trim() === "") continue;
     rows.push({
       rowIdx: r,
@@ -198,6 +210,8 @@ function readExcel(): ExcelRow[] {
       applicants: clean(cell("R", r)),
       inventors: clean(cell("S", r)),
       status: clean(cell("AC", r)),
+      major_category: clean(byHeader("대분류", r)),
+      middle_category: clean(byHeader("중분류", r)),
       ipc_main: clean(cell("AG", r)),
       pdf_url: clean(cell("AH", r)),
       source_url: clean(cell("AJ", r)),
@@ -407,10 +421,10 @@ async function main() {
         `insert into patents (
           wipson_key, pdf_filename, country, title, title_ko,
           application_no, application_date, publication_no, registration_no,
-          applicants, inventors, ipc_main, status,
+          applicants, inventors, ipc_main, status, major_category, middle_category,
           description, summary_md, source_url, pdf_url, updated_at
         ) values (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17, now()
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19, now()
         )
         on conflict (wipson_key) do update set
           pdf_filename     = excluded.pdf_filename,
@@ -425,6 +439,8 @@ async function main() {
           inventors        = excluded.inventors,
           ipc_main         = excluded.ipc_main,
           status           = excluded.status,
+          major_category   = excluded.major_category,
+          middle_category  = excluded.middle_category,
           description      = excluded.description,
           source_url       = excluded.source_url,
           pdf_url          = excluded.pdf_url,
@@ -433,6 +449,7 @@ async function main() {
           row.wipson_key, row.pdf_filename, row.country, row.title, row.title_ko,
           row.application_no, row.application_date, row.publication_no, row.registration_no,
           row.applicants, row.inventors, row.ipc_main, row.status,
+          row.major_category, row.middle_category,
           row.description, row.summary_md, row.source_url, row.pdf_url,
         ],
       );

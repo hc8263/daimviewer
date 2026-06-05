@@ -13,6 +13,8 @@ create table if not exists patents (
   inventors        text,
   ipc_main         text,
   status           text,
+  major_category   text,
+  middle_category  text,
   description      text,
   description_ko   text,
   summary_md       text,
@@ -26,6 +28,8 @@ create table if not exists patents (
 -- migrations (idempotent) for older deployments
 alter table patents add column if not exists admin_note text;
 alter table patents add column if not exists easy_summary_md text;
+alter table patents add column if not exists major_category text;
+alter table patents add column if not exists middle_category text;
 create index if not exists patents_title_idx on patents using gin (to_tsvector('simple', title || ' ' || coalesce(title_ko,'')));
 create index if not exists patents_country_idx on patents (country);
 create index if not exists patents_appno_idx on patents (application_no);

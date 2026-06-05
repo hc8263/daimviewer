@@ -15,6 +15,8 @@ export type PatentView = {
   pubDate: string;
   ipc: string;
   classifier: string;
+  majorCategory?: string | null;
+  middleCategory?: string | null;
   reviewStatus: string | null;
   reviewer: string | null;
   reviewDate: string | null;
@@ -59,6 +61,8 @@ function rowToView(r: RowExt): PatentView {
     pubDate: r.publication_no || "",
     ipc: r.ipc_main || "",
     classifier: r.status || "",
+    majorCategory: (r as any).major_category ?? null,
+    middleCategory: (r as any).middle_category ?? null,
     reviewStatus: r.decision || null,
     reviewer: r.reviewer || null,
     reviewDate: r.review_date || null,
@@ -90,7 +94,8 @@ export async function listPatents(opts?: { includeExcluded?: boolean }): Promise
       select p.wipson_key, p.country, p.title, p.title_ko,
              p.application_no, p.application_date, p.publication_no,
              p.registration_no, p.applicants, p.inventors,
-             p.ipc_main, p.status, p.source_url, p.pdf_url, p.pdf_filename,
+             p.ipc_main, p.status, p.major_category, p.middle_category,
+             p.source_url, p.pdf_url, p.pdf_filename,
              null::text as description, null::text as description_ko,
              null::text as summary_md, p.admin_note,
              r.decision, r.reviewer,
