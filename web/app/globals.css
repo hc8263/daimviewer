@@ -485,9 +485,8 @@ button { font: inherit; cursor: pointer; }
 
 /* App chrome */
 .pr-app {
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -660,7 +659,7 @@ button { font: inherit; cursor: pointer; }
   display: grid;
   grid-template-columns: 220px 1fr;
   flex: 1;
-  min-height: 0;
+  min-height: calc(100vh - 52px);
 }
 
 /* Left rail — saved views / filters */
@@ -671,7 +670,7 @@ button { font: inherit; cursor: pointer; }
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto;
+  min-height: calc(100vh - 52px);
 }
 .lp-rail .section {
   display: flex; flex-direction: column; gap: 4px;
@@ -712,6 +711,7 @@ button { font: inherit; cursor: pointer; }
   flex-direction: column;
   background: var(--pr-bg);
   min-width: 0;
+  min-height: 0;
 }
 
 .lp-toolbar {
@@ -722,7 +722,7 @@ button { font: inherit; cursor: pointer; }
   background: #fff;
   border-bottom: 1px solid var(--pr-border);
   position: sticky;
-  top: 0;
+  top: 52px;
   z-index: 5;
   flex-wrap: nowrap;
 }
@@ -819,7 +819,8 @@ button { font: inherit; cursor: pointer; }
 /* Table */
 .lp-table {
   flex: 1;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   background: #fff;
 }
 .lp-table table {
@@ -2299,7 +2300,7 @@ button { font: inherit; cursor: pointer; }
 [data-theme="dark"] .dp-cnt-header .meta-row .lbl { color: var(--pr-fg-faint); }
 [data-theme="dark"] .dp-cnt-header .meta-row .val { color: var(--pr-fg-strong); }
 
-/* Decision pills (관련/보류/무관) */
+/* Decision pills (S/A/B 등급) */
 [data-theme="dark"] .dp-decisions {
   background: var(--pr-surface-alt) !important;
   border: 1px solid var(--pr-border);
@@ -2515,7 +2516,7 @@ button { font: inherit; cursor: pointer; }
   font-weight: 700;
 }
 
-/* ── Status pills (관련/보류/무관) ───────────────────────────────────── */
+/* ── Status pills (S/A/B 등급) ───────────────────────────────────── */
 [data-theme="dark"] .status-pill.relevant   { background: rgba(122,167,255,0.18); color: var(--pr-action-strong); }
 [data-theme="dark"] .status-pill.maybe      { background: rgba(240,181,96,0.18);  color: var(--pr-warning); }
 [data-theme="dark"] .status-pill.irrelevant { background: var(--pr-surface-alt);  color: var(--pr-fg-muted); }
@@ -3001,4 +3002,3 @@ html:not([data-theme="dark"]) body {
 :root:not([data-theme="dark"]) .pr-iconbtn[title*="다크"] {
   color: var(--pr-fg-muted);
 }
-

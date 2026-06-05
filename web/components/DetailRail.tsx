@@ -59,7 +59,7 @@ export function DetailRail({ active, patents, width = 260 }: {
       <div className="dp-rail-filters">
         {(["all", "unreviewed", "relevant", "maybe", "irrelevant"] as const).map((k) => (
           <button key={k} className={`f ${filter === k ? "on" : ""}`} onClick={() => setFilter(k)}>
-            {{ all: "전체", unreviewed: "미검토", relevant: "관련", maybe: "보류", irrelevant: "무관" }[k]}
+            {{ all: "전체", unreviewed: "미검토", relevant: "S등급", maybe: "A등급", irrelevant: "B등급" }[k]}
           </button>
         ))}
       </div>

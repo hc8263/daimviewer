@@ -89,9 +89,9 @@ export function StatusPill({ status }: { status: string | null | undefined }) {
     );
   }
   const map: Record<string, { fg: string; bg: string; dot: string; label: string }> = {
-    relevant:   { fg: "#005EEB", bg: "#EAF2FE", dot: "#0066FF", label: "관련" },
-    maybe:      { fg: "#9C5800", bg: "#FEF4E6", dot: "#FF9200", label: "보류" },
-    irrelevant: { fg: "#5A5C63", bg: "#EAEBEC", dot: "#878A93", label: "무관" },
+    relevant:   { fg: "#005EEB", bg: "#EAF2FE", dot: "#0066FF", label: "S등급" },
+    maybe:      { fg: "#9C5800", bg: "#FEF4E6", dot: "#FF9200", label: "A등급" },
+    irrelevant: { fg: "#5A5C63", bg: "#EAEBEC", dot: "#878A93", label: "B등급" },
   };
   const s = map[status];
   if (!s) return null;

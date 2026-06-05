@@ -173,13 +173,13 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
           <div style={{ flex: 1 }} />
           <div className="dp-decisions">
             <button className={`${decision === "relevant" ? "on relevant" : ""}`} onClick={() => save("relevant")}>
-              <PRIcon name="CheckCircle" size={13} color={decision === "relevant" ? "#0066FF" : "currentColor"} />관련
+              <PRIcon name="CheckCircle" size={13} color={decision === "relevant" ? "#0066FF" : "currentColor"} />S등급
             </button>
             <button className={`${decision === "maybe" ? "on maybe" : ""}`} onClick={() => save("maybe")}>
-              <PRIcon name="HelpCircle" size={13} color={decision === "maybe" ? "#FF9200" : "currentColor"} />보류
+              <PRIcon name="HelpCircle" size={13} color={decision === "maybe" ? "#FF9200" : "currentColor"} />A등급
             </button>
             <button className={`${decision === "irrelevant" ? "on irrelevant" : ""}`} onClick={() => save("irrelevant")}>
-              <PRIcon name="XCircle" size={13} color={decision === "irrelevant" ? "#46474C" : "currentColor"} />무관
+              <PRIcon name="XCircle" size={13} color={decision === "irrelevant" ? "#46474C" : "currentColor"} />B등급
             </button>
           </div>
         </div>

@@ -5,10 +5,41 @@ import { TopBar } from "./TopBar";
 import { PRIcon, FlagBadge, StatusPill } from "./icons";
 import type { PatentView } from "@/lib/patents";
 
-export function PatentList({ patents, classifiers }: { patents: PatentView[]; classifiers: string[] }) {
+export function PatentList({ patents }: { patents: PatentView[] }) {
   const router = useRouter();
   const [items, setItems] = React.useState<PatentView[]>(patents);
   React.useEffect(() => setItems(patents), [patents]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const refresh = async () => {
+      try {
+        const res = await fetch("/api/patents", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { patents?: PatentView[] };
+        if (!cancelled && Array.isArray(data.patents)) setItems(data.patents);
+      } catch {
+        /* keep current list when offline */
+      }
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+
+    timer = setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   const [filter, setFilter] = React.useState<{ status: string | null; classifier: string | null; reviewer: string | null; country: string | null; excluded: boolean }>({
     status: null, classifier: null, reviewer: null, country: null, excluded: false,
@@ -137,26 +168,17 @@ export function PatentList({ patents, classifiers }: { patents: PatentView[]; cl
               <PRIcon name="Circle" size={14} color="var(--pr-fg-faint)" />미검토<span className="count">{stats.unreviewed}</span>
             </div>
             <div className={`nav-item ${!filter.excluded && filter.status === "relevant" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("relevant"); }}>
-              <PRIcon name="CheckCircle" size={14} color="#0066FF" />관련<span className="count">{stats.relevant}</span>
+              <PRIcon name="CheckCircle" size={14} color="#0066FF" />S등급<span className="count">{stats.relevant}</span>
             </div>
             <div className={`nav-item ${!filter.excluded && filter.status === "maybe" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("maybe"); }}>
-              <PRIcon name="HelpCircle" size={14} color="#FF9200" />보류<span className="count">{stats.maybe}</span>
+              <PRIcon name="HelpCircle" size={14} color="#FF9200" />A등급<span className="count">{stats.maybe}</span>
             </div>
             <div className={`nav-item ${!filter.excluded && filter.status === "irrelevant" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("irrelevant"); }}>
-              <PRIcon name="XCircle" size={14} color="#878A93" />무관<span className="count">{stats.irrelevant}</span>
+              <PRIcon name="XCircle" size={14} color="#878A93" />B등급<span className="count">{stats.irrelevant}</span>
             </div>
             <div className={`nav-item ${filter.excluded ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, excluded: !f.excluded, status: null }))}>
               <PRIcon name="Trash" size={14} color="var(--pr-fg-faint)" />삭제됨<span className="count">{excludedCount}</span>
             </div>
-          </div>
-          <div className="section">
-            <div className="section-h">분류</div>
-            {classifiers.map((c) => (
-              <div key={c} className={`nav-item ${filter.classifier === c ? "active" : ""}`}
-                   onClick={() => setFilter((f) => ({ ...f, classifier: f.classifier === c ? null : c }))}>
-                {c}<span className="count">{pool.filter((p) => p.classifier === c).length}</span>
-              </div>
-            ))}
           </div>
         </aside>
 

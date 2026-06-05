@@ -11,9 +11,9 @@ function csvEscape(v: unknown): string {
 }
 
 const DECISION_LABEL: Record<string, string> = {
-  relevant: "관련",
-  maybe: "보류",
-  irrelevant: "무관",
+  relevant: "S등급",
+  maybe: "A등급",
+  irrelevant: "B등급",
 };
 
 export async function POST(req: NextRequest) {
