@@ -2364,6 +2364,39 @@ button { font: inherit; cursor: pointer; }
   border-color: rgba(122,167,255,0.35);
   color: var(--pr-action-strong);
 }
+[data-theme="dark"] .dp-rail-pagination {
+  background: var(--pr-surface) !important;
+  border-top-color: var(--pr-border);
+}
+[data-theme="dark"] .dp-rail-pageinfo {
+  color: var(--pr-fg-faint);
+}
+[data-theme="dark"] .dp-rail-pageinfo .current {
+  color: var(--pr-fg-strong);
+}
+[data-theme="dark"] .dp-rail-pagebtn {
+  background: var(--pr-surface-alt);
+  border-color: var(--pr-border);
+  color: var(--pr-fg-muted);
+}
+[data-theme="dark"] .dp-rail-pagebtn:hover:not(:disabled) {
+  background: var(--pr-surface-raised);
+  border-color: var(--pr-border-strong);
+  color: var(--pr-fg-strong);
+}
+[data-theme="dark"] .dp-rail-pagebtn.on {
+  background: var(--pr-action);
+  border-color: var(--pr-action);
+  color: #0B1220;
+}
+[data-theme="dark"] .dp-rail-pagebtn:disabled {
+  background: transparent;
+  border-color: var(--pr-divider);
+  color: var(--pr-fg-faint);
+}
+[data-theme="dark"] .dp-rail-pagespacer {
+  color: var(--pr-fg-faint);
+}
 
 /* ── Detail page (중앙 본문) ─────────────────────────────────────────── */
 [data-theme="dark"] .dp-shell { background: var(--pr-bg); }
