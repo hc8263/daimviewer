@@ -1187,7 +1187,12 @@ button { font: inherit; cursor: pointer; }
   line-height: 1.35;
   margin: 0;
   flex: 1;
-  min-width: 0;
+  /* 좁은 화면에서 제목이 0폭까지 짜부라져 한 글자씩 꺾이지 않도록 최소 폭 보장
+     — 공간이 부족하면 옆의 토글/버튼이 다음 줄로 내려간다(.row가 flex-wrap). */
+  min-width: min(100%, 220px);
+  /* 한국어는 어절(띄어쓰기) 단위로 줄바꿈 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 .dp-cnt-header .id {
   font-family: var(--font-family-mono);
