@@ -41,8 +41,8 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
     };
   }, []);
 
-  const [filter, setFilter] = React.useState<{ status: string | null; classifier: string | null; reviewer: string | null; country: string | null; excluded: boolean }>({
-    status: null, classifier: null, reviewer: null, country: null, excluded: false,
+  const [filter, setFilter] = React.useState<{ status: string | null; classifier: string | null; reviewer: string | null; country: string | null; excluded: boolean; newOnly: boolean }>({
+    status: null, classifier: null, reviewer: null, country: null, excluded: false, newOnly: false,
   });
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [sort, setSort] = React.useState({ col: "appDate" as keyof PatentView, dir: "desc" as "asc" | "desc" });
@@ -59,8 +59,10 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
     unreviewed: pool.filter((p) => !p.reviewStatus).length,
   };
   const excludedCount = items.filter((p) => p.excluded).length;
+  const newCount = pool.filter((p) => p.isNew).length;
 
   let rows = pool;
+  if (filter.newOnly) rows = rows.filter((p) => p.isNew);
   if (filter.status === "unreviewed") rows = rows.filter((p) => !p.reviewStatus);
   else if (filter.status) rows = rows.filter((p) => p.reviewStatus === filter.status);
   if (filter.classifier) rows = rows.filter((p) => p.classifier === filter.classifier);
@@ -161,9 +163,14 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
         <aside className="lp-rail">
           <div className="section">
             <div className="section-h">검토 상태</div>
-            <div className={`nav-item ${!filter.excluded && filter.status === null ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null, excluded: false }))}>
+            <div className={`nav-item ${!filter.excluded && !filter.newOnly && filter.status === null ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null, excluded: false, newOnly: false }))}>
               <PRIcon name="Circle" size={14} color="var(--pr-fg-muted)" />전체<span className="count">{total}</span>
             </div>
+            {newCount > 0 && (
+              <div className={`nav-item ${!filter.excluded && filter.newOnly ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, excluded: false, newOnly: !f.newOnly }))}>
+                <PRIcon name="Sparkles" size={14} color="#00B468" />최근 추가<span className="count">{newCount}</span>
+              </div>
+            )}
             <div className={`nav-item ${!filter.excluded && filter.status === "unreviewed" ? "active" : ""}`} onClick={() => { setFilter((f) => ({ ...f, excluded: false })); setStatus("unreviewed"); }}>
               <PRIcon name="Circle" size={14} color="var(--pr-fg-faint)" />미검토<span className="count">{stats.unreviewed}</span>
             </div>
@@ -282,7 +289,10 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
                     </td>
                     <td className="mono" style={{ color: "var(--pr-fg-muted)", fontVariantNumeric: "tabular-nums" }}>{p.index ?? ""}</td>
                     <td><FlagBadge country={p.country} /></td>
-                    <td className="id-cell">{p.wipsonKey}</td>
+                    <td className="id-cell">
+                      {p.wipsonKey}
+                      {p.isNew && <span className="lp-new-badge">NEW</span>}
+                    </td>
                     <td className="title-cell">
                       {p.fileTitle}
                       <span className="applicant">{p.applicant} · {p.inventor}</span>

@@ -5,6 +5,8 @@ import { MOCK_PATENTS, MOCK_SUMMARIES, getMockSummary } from "./mock";
 
 export type PatentView = {
   index?: number;
+  /** 최근 업로드(7일 이내)로 추가된 특허 — 목록에서 NEW 배지 표시용 */
+  isNew?: boolean;
   wipsonKey: string;
   fileTitle: string;
   titleKo: string | null;
@@ -47,10 +49,12 @@ type RowExt = PatentRow & {
   review_date?: string | null;
   note?: string | null;
   excluded?: boolean | null;
+  is_new?: boolean | null;
 };
 
 function rowToView(r: RowExt): PatentView {
   return {
+    isNew: !!r.is_new,
     wipsonKey: r.wipson_key,
     fileTitle: r.title_ko || r.title,
     titleKo: r.title_ko,
@@ -98,6 +102,7 @@ export async function listPatents(opts?: { includeExcluded?: boolean }): Promise
              p.source_url, p.pdf_url, p.pdf_filename,
              null::text as description, null::text as description_ko,
              null::text as summary_md, p.admin_note,
+             (p.created_at > now() - interval '7 days') as is_new,
              r.decision, r.reviewer,
              to_char(r.updated_at, 'YYYY-MM-DD') as review_date,
              r.note, coalesce(r.excluded, false) as excluded
@@ -109,7 +114,9 @@ export async function listPatents(opts?: { includeExcluded?: boolean }): Promise
            order by updated_at desc
            limit 1
         ) r on true
-        order by p.application_date desc nulls last
+        -- seq 고정 번호 순. 신규 업로드는 max(seq)+1 이후를 받으므로
+        -- 기존 행의 # 번호가 절대 바뀌지 않는다.
+        order by p.seq asc nulls last, p.application_date desc nulls last
     `) as unknown as RowExt[];
     // Always return all rows including excluded; UI filters by default.
     return assignIndices(rows.map(rowToView));

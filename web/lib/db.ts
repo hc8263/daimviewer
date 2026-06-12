@@ -18,6 +18,8 @@ export const sql = hasDb ? neon(process.env.DATABASE_URL!) : null;
 
 export type PatentRow = {
   wipson_key: string;
+  seq?: number | null;
+  created_at?: string | Date | null;
   country: string | null;
   title: string;
   title_ko: string | null;

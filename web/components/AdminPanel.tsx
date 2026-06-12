@@ -8,7 +8,7 @@ import type { PatentView } from "@/lib/patents";
 
 export function AdminPanel({ patents }: { patents: PatentView[] }) {
   const router = useRouter();
-  const [tab, setTab] = React.useState<"upload" | "notes" | "models">("upload");
+  const [tab, setTab] = React.useState<"upload" | "process" | "notes" | "models">("upload");
 
   const logout = async () => {
     await fetch("/api/admin/login", { method: "DELETE" });
@@ -22,6 +22,9 @@ export function AdminPanel({ patents }: { patents: PatentView[] }) {
         <aside className="admin-rail">
           <div className={`nav-item ${tab === "upload" ? "active" : ""}`} onClick={() => setTab("upload")}>
             <PRIcon name="Upload" size={14} />분석 대상 업로드
+          </div>
+          <div className={`nav-item ${tab === "process" ? "active" : ""}`} onClick={() => setTab("process")}>
+            <PRIcon name="Sparkles" size={14} />번역 · 요약
           </div>
           <div className={`nav-item ${tab === "notes" ? "active" : ""}`} onClick={() => setTab("notes")}>
             <PRIcon name="MessageSquare" size={14} />관리자 메모
@@ -39,6 +42,7 @@ export function AdminPanel({ patents }: { patents: PatentView[] }) {
         </aside>
         <main className="admin-main">
           {tab === "upload" && <UploadTab />}
+          {tab === "process" && <ProcessTab />}
           {tab === "notes" && <NotesTab patents={patents} />}
           {tab === "models" && <ModelsTab />}
         </main>
@@ -47,10 +51,25 @@ export function AdminPanel({ patents }: { patents: PatentView[] }) {
   );
 }
 
+type UploadResult = {
+  ok: boolean;
+  error?: string;
+  sheet?: string;
+  headerRow?: number;
+  mapping?: { field: string; label: string; header: string }[];
+  missing?: string[];
+  inserted?: number;
+  updated?: number;
+  duplicateInFile?: number;
+  insertedKeys?: string[];
+  warnings?: string[];
+};
+
 function UploadTab() {
+  const router = useRouter();
   const [file, setFile] = React.useState<File | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [result, setResult] = React.useState<{ ok: boolean; inserted?: number; updated?: number; error?: string; warnings?: string[] } | null>(null);
+  const [result, setResult] = React.useState<UploadResult | null>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +82,7 @@ function UploadTab() {
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
       const j = await res.json();
       setResult({ ok: res.ok, ...j });
+      if (res.ok) router.refresh();
     } catch (err) {
       setResult({ ok: false, error: (err as Error).message });
     }
@@ -73,10 +93,12 @@ function UploadTab() {
     <section className="admin-card">
       <h2>분석 대상 특허 업로드 (.xlsx)</h2>
       <p className="admin-help">
-        WIPSON ON 엑셀 파일을 업로드하세요. 헤더 매핑: <code>WIPSON ON Key / WIPSONKEY → wipson_key</code>,
-        <code>국가</code>, <code>발명의명칭 / Title</code>, <code>출원번호</code>, <code>출원일자</code>,
-        <code>공개번호</code>, <code>등록번호</code>, <code>출원인</code>, <code>발명자</code>,
-        <code>IPC메인 / IPC</code>, <code>분류 / 상태</code>.
+        WIPS ON 엑셀 파일을 업로드하세요. 데이터 시트와 헤더 행은 자동으로 탐지하며,
+        <code>WIPS ON key</code>, <code>국가코드</code>, <code>발명의 명칭(원문/번역문)</code>,
+        <code>출원번호 · 출원일</code>, <code>공개·등록번호</code>, <code>출원인 · 발명자</code>,
+        <code>Current IPC Main</code>, <code>대분류 · 중분류</code>, <code>원문(PDF)/상세보기 링크</code>를
+        자동 매핑합니다. 이미 존재하는 특허(WIPS ON key 기준)는 신규 등록 대신 갱신되며,
+        기존 목록 번호(#)는 변하지 않고 신규 건은 목록 맨 뒤 번호로 추가됩니다.
       </p>
       <form onSubmit={onSubmit} className="admin-form">
         <input type="file" accept=".xlsx,.xls" onChange={(e) => setFile(e.target.files?.[0] || null)} />
@@ -88,7 +110,36 @@ function UploadTab() {
         <div className={`admin-result ${result.ok ? "ok" : "err"}`}>
           {result.ok ? (
             <>
-              ✅ 업로드 완료 — 신규 {result.inserted ?? 0}건 · 갱신 {result.updated ?? 0}건
+              <div className="upload-counts">
+                ✅ 업로드 완료 — <strong>신규 {result.inserted ?? 0}건</strong> ·
+                중복(기존 갱신) {result.updated ?? 0}건
+                {(result.duplicateInFile ?? 0) > 0 && <> · 파일 내 중복 {result.duplicateInFile}건 건너뜀</>}
+                <span className="upload-sheet">시트 「{result.sheet}」 · 헤더 {result.headerRow}행</span>
+              </div>
+              {result.insertedKeys && result.insertedKeys.length > 0 && (
+                <details open>
+                  <summary>신규 추가된 특허 {result.insertedKeys.length}건 — 목록에서 <strong>NEW</strong> 배지로 표시됩니다</summary>
+                  <div className="upload-keys">
+                    {result.insertedKeys.map((k) => <code key={k}>{k}</code>)}
+                  </div>
+                </details>
+              )}
+              {result.mapping && (
+                <details>
+                  <summary>컬럼 매핑 확인 ({result.mapping.length}개 매핑{result.missing && result.missing.length > 0 ? ` · 미매핑 ${result.missing.length}개` : ""})</summary>
+                  <table className="upload-mapping">
+                    <thead><tr><th>DB 필드</th><th>엑셀 헤더</th></tr></thead>
+                    <tbody>
+                      {result.mapping.map((m) => (
+                        <tr key={m.field}><td>{m.label}</td><td><code>{m.header}</code></td></tr>
+                      ))}
+                      {(result.missing || []).map((f) => (
+                        <tr key={f} className="miss"><td>{f}</td><td>— 매핑되는 헤더 없음</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              )}
               {result.warnings && result.warnings.length > 0 && (
                 <details>
                   <summary>경고 {result.warnings.length}건</summary>
@@ -101,6 +152,211 @@ function UploadTab() {
           )}
         </div>
       )}
+    </section>
+  );
+}
+
+type ProcRow = {
+  seq: number | null;
+  wipson_key: string;
+  country: string | null;
+  title: string;
+  title_ko: string | null;
+  created_at: string;
+  is_new: boolean;
+  desc_chars: number;
+  desc_ko_chars: number;
+  has_summary: boolean;
+  has_easy: boolean;
+};
+
+type ProcMode = "translate" | "summarize" | "easy";
+const PROC_LABEL: Record<ProcMode, string> = {
+  translate: "번역",
+  summarize: "명세서 요약",
+  easy: "쉬운 요약",
+};
+
+type ProcState = { state: "running" | "ok" | "err"; mode: ProcMode; msg?: string };
+
+function ProcessTab() {
+  const [rows, setRows] = React.useState<ProcRow[] | null>(null);
+  const [filter, setFilter] = React.useState<"all" | "new" | "needTranslate" | "needSummary">("new");
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [busy, setBusy] = React.useState(false);
+  const [progress, setProgress] = React.useState<{ done: number; total: number; mode: string } | null>(null);
+  const [status, setStatus] = React.useState<Record<string, ProcState>>({});
+  const stopRef = React.useRef(false);
+
+  const load = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/process", { cache: "no-store" });
+      const j = await res.json();
+      if (res.ok && Array.isArray(j.rows)) setRows(j.rows);
+    } catch { /* keep current */ }
+  }, []);
+  React.useEffect(() => { load(); }, [load]);
+
+  if (!rows) {
+    return <section className="admin-card"><h2>번역 · 요약 (Gemini 2.5 Flash)</h2><p className="admin-help">불러오는 중…</p></section>;
+  }
+
+  const needTranslate = (r: ProcRow) => r.desc_chars > 0 && r.desc_ko_chars === 0;
+  const needSummary = (r: ProcRow) => (!r.has_summary || !r.has_easy) && (r.desc_ko_chars > 0 || r.desc_chars > 0);
+  const list = rows.filter((r) => {
+    if (filter === "new") return r.is_new;
+    if (filter === "needTranslate") return needTranslate(r);
+    if (filter === "needSummary") return needSummary(r);
+    return true;
+  });
+
+  const counts = {
+    all: rows.length,
+    new: rows.filter((r) => r.is_new).length,
+    needTranslate: rows.filter(needTranslate).length,
+    needSummary: rows.filter(needSummary).length,
+  };
+
+  const toggle = (k: string) => {
+    const next = new Set(selected);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    setSelected(next);
+  };
+  const toggleAll = () => {
+    const visible = list.map((r) => r.wipson_key);
+    const allSelected = visible.length > 0 && visible.every((k) => selected.has(k));
+    setSelected(allSelected ? new Set() : new Set(visible));
+  };
+
+  // 선택 항목을 1건씩 순차 처리 (서버는 특허 1건 × 작업 1개 단위)
+  const run = async (mode: ProcMode) => {
+    const keys = list.filter((r) => selected.has(r.wipson_key)).map((r) => r.wipson_key);
+    if (keys.length === 0 || busy) return;
+    const label = PROC_LABEL[mode];
+    if (!confirm(`${keys.length}건을 Gemini 2.5 Flash로 ${label}할까요?`)) return;
+    setBusy(true);
+    stopRef.current = false;
+    setProgress({ done: 0, total: keys.length, mode: label });
+    for (let i = 0; i < keys.length; i++) {
+      if (stopRef.current) break;
+      const k = keys[i];
+      setStatus((s) => ({ ...s, [k]: { state: "running", mode } }));
+      try {
+        const res = await fetch("/api/admin/process", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ wipsonKey: k, mode }),
+        });
+        const j = await res.json();
+        if (res.ok) {
+          setStatus((s) => ({ ...s, [k]: { state: "ok", mode, msg: `${(j.outChars ?? 0).toLocaleString()}자 생성` } }));
+        } else {
+          setStatus((s) => ({ ...s, [k]: { state: "err", mode, msg: j.error || `HTTP ${res.status}` } }));
+        }
+      } catch (err) {
+        setStatus((s) => ({ ...s, [k]: { state: "err", mode, msg: (err as Error).message } }));
+      }
+      setProgress({ done: i + 1, total: keys.length, mode: label });
+    }
+    setBusy(false);
+    await load();
+  };
+
+  const mark = (yes: boolean) => yes
+    ? <span className="proc-flag ok">✓</span>
+    : <span className="proc-flag no">—</span>;
+
+  return (
+    <section className="admin-card">
+      <h2>번역 · 요약 (Gemini 2.5 Flash)</h2>
+      <p className="admin-help">
+        업로드된 특허의 <strong>번역</strong>(원문 → 한글 명세서)과 2가지 스타일의 요약 —
+        <strong>명세서 중심 요약</strong>(단락번호 근거 부기, 검토용)과 <strong>이해하기 쉬운 ver</strong>(비전공자용
+        해설) — 을 생성합니다. 대상을 선택한 뒤 실행하세요. 번역은 원문이 적재된 특허만, 요약은 번역문(없으면
+        원문)이 있는 특허만 처리할 수 있습니다.
+      </p>
+
+      <div className="proc-toolbar">
+        <div className="proc-filters">
+          <button className={`lp-chip ${filter === "new" ? "has-value" : ""}`} onClick={() => setFilter("new")}>최근 추가 <span className="val">{counts.new}</span></button>
+          <button className={`lp-chip ${filter === "needTranslate" ? "has-value" : ""}`} onClick={() => setFilter("needTranslate")}>번역 필요 <span className="val">{counts.needTranslate}</span></button>
+          <button className={`lp-chip ${filter === "needSummary" ? "has-value" : ""}`} onClick={() => setFilter("needSummary")}>요약 필요 <span className="val">{counts.needSummary}</span></button>
+          <button className={`lp-chip ${filter === "all" ? "has-value" : ""}`} onClick={() => setFilter("all")}>전체 <span className="val">{counts.all}</span></button>
+        </div>
+        <div style={{ flex: 1 }} />
+        {busy ? (
+          <>
+            <span className="proc-progress">{progress?.mode} 진행 중 — {progress?.done}/{progress?.total}</span>
+            <button className="pr-btn pr-btn-default pr-btn-sm" onClick={() => { stopRef.current = true; }}>중지</button>
+          </>
+        ) : (
+          <>
+            <button className="pr-btn pr-btn-primary pr-btn-sm" disabled={selected.size === 0} onClick={() => run("translate")}>
+              번역 ({selected.size})
+            </button>
+            <button className="pr-btn pr-btn-primary pr-btn-sm" disabled={selected.size === 0} onClick={() => run("summarize")}>
+              명세서 요약 ({selected.size})
+            </button>
+            <button className="pr-btn pr-btn-primary pr-btn-sm" disabled={selected.size === 0} onClick={() => run("easy")}>
+              쉬운 요약 ({selected.size})
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="proc-table">
+        <table>
+          <thead>
+            <tr>
+              <th style={{ width: 32 }}>
+                <span className={`lp-checkbox ${list.length > 0 && list.every((r) => selected.has(r.wipson_key)) ? "checked" : ""}`} onClick={toggleAll}>
+                  {list.length > 0 && list.every((r) => selected.has(r.wipson_key)) && <PRIcon name="Check" size={11} color="#fff" />}
+                </span>
+              </th>
+              <th style={{ width: 40 }}>#</th>
+              <th style={{ width: 160 }}>WIPSONKEY</th>
+              <th>제목</th>
+              <th style={{ width: 56 }}>원문</th>
+              <th style={{ width: 56 }}>번역</th>
+              <th style={{ width: 80 }}>명세서 요약</th>
+              <th style={{ width: 80 }}>쉬운 요약</th>
+              <th style={{ width: 220 }}>처리 결과</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((r) => {
+              const st = status[r.wipson_key];
+              return (
+                <tr key={r.wipson_key} className={selected.has(r.wipson_key) ? "selected" : ""} onClick={() => toggle(r.wipson_key)}>
+                  <td>
+                    <span className={`lp-checkbox ${selected.has(r.wipson_key) ? "checked" : ""}`}>
+                      {selected.has(r.wipson_key) && <PRIcon name="Check" size={11} color="#fff" />}
+                    </span>
+                  </td>
+                  <td className="mono">{r.seq ?? ""}</td>
+                  <td className="mono">
+                    {r.wipson_key}
+                    {r.is_new && <span className="lp-new-badge">NEW</span>}
+                  </td>
+                  <td className="proc-title">{r.title_ko || r.title}</td>
+                  <td>{mark(r.desc_chars > 0)}</td>
+                  <td>{mark(r.desc_ko_chars > 0)}</td>
+                  <td>{mark(r.has_summary)}</td>
+                  <td>{mark(r.has_easy)}</td>
+                  <td className="proc-status">
+                    {st?.state === "running" && <span className="run">{PROC_LABEL[st.mode]} 중…</span>}
+                    {st?.state === "ok" && <span className="ok">✓ {st.msg}</span>}
+                    {st?.state === "err" && <span className="err" title={st.msg}>✗ {st.msg}</span>}
+                  </td>
+                </tr>
+              );
+            })}
+            {list.length === 0 && (
+              <tr><td colSpan={9} className="proc-empty">해당 조건의 특허가 없습니다.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

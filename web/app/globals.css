@@ -1520,6 +1520,53 @@ button { font: inherit; cursor: pointer; }
 .admin-result { margin-top: 16px; font-size: 13px; padding: 10px 12px; border-radius: 6px; }
 .admin-result.ok { background: #E8F7EC; border: 1px solid #9BD5A8; }
 .admin-result.err { background: #FDEAEA; border: 1px solid #F2A6A6; }
+.admin-result details { margin-top: 8px; }
+.admin-result summary { cursor: pointer; font-size: 12px; }
+
+/* 업로드 결과 상세 */
+.upload-counts { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.upload-sheet { margin-left: auto; font-size: 11px; color: var(--pr-fg-muted); }
+.upload-keys { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; max-height: 160px; overflow: auto; }
+.upload-keys code {
+  font-family: var(--font-family-mono); font-size: 11px;
+  background: rgba(0,180,104,0.12); border: 1px solid rgba(0,180,104,0.3);
+  padding: 1px 6px; border-radius: 4px;
+}
+.upload-mapping { margin-top: 6px; border-collapse: collapse; font-size: 12px; }
+.upload-mapping th, .upload-mapping td { text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid var(--pr-divider); }
+.upload-mapping code { font-family: var(--font-family-mono); font-size: 11px; }
+.upload-mapping tr.miss td { color: var(--pr-fg-faint); }
+
+/* 목록 NEW 배지 */
+.lp-new-badge {
+  display: inline-block; margin-left: 6px; padding: 0 5px;
+  font-size: 9px; font-weight: 700; line-height: 14px; letter-spacing: 0.04em;
+  color: #fff; background: #00B468; border-radius: 3px; vertical-align: 1px;
+}
+
+/* 번역·요약 탭 */
+.proc-toolbar { display: flex; align-items: center; gap: 8px; margin: 14px 0 10px; }
+.proc-filters { display: flex; gap: 6px; }
+.proc-progress { font-size: 12px; color: var(--pr-fg-muted); }
+.proc-table { border: 1px solid var(--pr-border); border-radius: 8px; overflow: auto; max-height: 60vh; }
+.proc-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.proc-table th {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; padding: 8px 10px; background: var(--pr-bg);
+  border-bottom: 1px solid var(--pr-border); font-weight: 600; color: var(--pr-fg-muted);
+}
+.proc-table td { padding: 7px 10px; border-bottom: 1px solid var(--pr-divider); }
+.proc-table tbody tr { cursor: pointer; }
+.proc-table tbody tr:hover { background: var(--pr-hover); }
+.proc-table tbody tr.selected { background: rgba(0,102,255,0.07); }
+.proc-table .mono { font-family: var(--font-family-mono); font-size: 11px; }
+.proc-title { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proc-flag.ok { color: #009156; font-weight: 700; }
+.proc-flag.no { color: var(--pr-fg-faint); }
+.proc-status .run { color: var(--pr-action, #0066FF); }
+.proc-status .ok { color: #009156; }
+.proc-status .err { color: #C83C3C; }
+.proc-empty { text-align: center; color: var(--pr-fg-faint); padding: 24px !important; }
 
 /* LLM 모델 비교 */
 .model-grid {
