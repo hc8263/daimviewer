@@ -465,6 +465,7 @@ html, body { font-family: var(--font-family-base); color: var(--color-label-norm
 
   --pr-action:    #0066FF;  /* still the brand blue — used sparingly */
   --pr-action-bg: #EAF2FE;
+  --pr-hover:     rgba(112,115,124,0.08);
 }
 
 html, body { margin: 0; padding: 0; }
@@ -2137,6 +2138,50 @@ button { font: inherit; cursor: pointer; }
 [data-theme="dark"] .dp-admin-note-h { color: #FFC56E; }
 [data-theme="dark"] .admin-result.ok { background: rgba(40,160,80,0.16); border-color: rgba(40,160,80,0.36); color: #9CE0B0; }
 [data-theme="dark"] .admin-result.err { background: rgba(200,60,60,0.16); border-color: rgba(200,60,60,0.36); color: #F2A6A6; }
+
+/* ── 관리자 모드 다크 테마 ─────────────────────────────────────────────── */
+[data-theme="dark"] .admin-card,
+[data-theme="dark"] .model-card {
+  background: var(--pr-surface);
+  border-color: var(--pr-border);
+}
+[data-theme="dark"] .admin-card h2,
+[data-theme="dark"] .model-summary h3,
+[data-theme="dark"] .admin-notes-edit .h .t { color: var(--pr-fg-strong); }
+[data-theme="dark"] .admin-rail { background: var(--pr-surface); border-color: var(--pr-border); }
+[data-theme="dark"] .admin-rail .nav-item.active { background: var(--pr-action-bg); color: var(--pr-action-strong); }
+[data-theme="dark"] .admin-search,
+[data-theme="dark"] .admin-notes-edit textarea {
+  background: var(--pr-surface-alt);
+  border-color: var(--pr-border);
+  color: var(--pr-fg);
+}
+[data-theme="dark"] .admin-notes-rows .row.active { background: var(--pr-action-bg); }
+
+/* 업로드 드롭존 */
+[data-theme="dark"] .upload-drop { background: var(--pr-surface-alt); }
+[data-theme="dark"] .upload-drop.dragging { border-color: var(--pr-action); background: var(--pr-action-bg); }
+[data-theme="dark"] .upload-drop.has-file { background: rgba(95,203,126,0.08); border-color: rgba(95,203,126,0.40); }
+[data-theme="dark"] .upload-drop-main .browse { color: var(--pr-action); }
+[data-theme="dark"] .upload-keys code { background: rgba(95,203,126,0.12); border-color: rgba(95,203,126,0.30); color: #9CE0B0; }
+
+/* 번역·요약 탭 */
+[data-theme="dark"] .proc-table { border-color: var(--pr-border); }
+[data-theme="dark"] .proc-table th {
+  background: var(--pr-surface-alt);
+  border-bottom-color: var(--pr-border);
+  color: var(--pr-fg-muted);
+}
+[data-theme="dark"] .proc-table tbody tr.selected { background: var(--pr-action-bg); }
+[data-theme="dark"] .proc-flag.ok,
+[data-theme="dark"] .proc-status .ok { color: var(--pr-success); }
+[data-theme="dark"] .proc-status .err { color: var(--pr-danger); }
+
+/* LLM 모델 비교 */
+[data-theme="dark"] .model-card.cheapest { border-color: var(--pr-action); box-shadow: 0 0 0 3px var(--pr-action-bg); }
+[data-theme="dark"] .model-bestfor { background: var(--pr-action-bg); }
+[data-theme="dark"] .model-pros-cons .pros .ph { color: var(--pr-success); }
+[data-theme="dark"] .model-pros-cons .cons .ph { color: var(--pr-danger); }
 [data-theme="dark"] .dp-chat-modal-bg { background: rgba(0,0,0,0.55); }
 [data-theme="dark"] code,
 [data-theme="dark"] pre,
@@ -2310,6 +2355,7 @@ button { font: inherit; cursor: pointer; }
   --pr-success:         #5FCB7E;
   --pr-warning:         #F0B560;
   --pr-danger:          #F08585;
+  --pr-hover:           rgba(180,195,220,0.08);
 
   /* Soft glow used on focus rings / active surfaces */
   --pr-ring:            0 0 0 1px rgba(122,167,255,0.45), 0 0 0 4px rgba(122,167,255,0.10);
