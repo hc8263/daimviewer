@@ -69,7 +69,41 @@ function UploadTab() {
   const router = useRouter();
   const [file, setFile] = React.useState<File | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [dragging, setDragging] = React.useState(false);
   const [result, setResult] = React.useState<UploadResult | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  // dragenter/dragleave는 자식 요소를 지날 때마다 발생하므로 깊이를 센다
+  const dragDepth = React.useRef(0);
+
+  const acceptFile = (f: File | undefined | null) => {
+    if (!f) return;
+    if (!/\.(xlsx|xls)$/i.test(f.name)) {
+      setResult({ ok: false, error: `엑셀 파일(.xlsx, .xls)만 업로드할 수 있습니다: ${f.name}` });
+      return;
+    }
+    setResult(null);
+    setFile(f);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragging(false);
+    acceptFile(e.dataTransfer.files?.[0]);
+  };
+  const onDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current++;
+    setDragging(true);
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragging(false);
+  };
+
+  const fmtSize = (n: number) =>
+    n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,10 +134,53 @@ function UploadTab() {
         자동 매핑합니다. 이미 존재하는 특허(WIPS ON key 기준)는 신규 등록 대신 갱신되며,
         기존 목록 번호(#)는 변하지 않고 신규 건은 목록 맨 뒤 번호로 추가됩니다.
       </p>
-      <form onSubmit={onSubmit} className="admin-form">
-        <input type="file" accept=".xlsx,.xls" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+      <form onSubmit={onSubmit} className="admin-form-upload">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: "none" }}
+          onChange={(e) => { acceptFile(e.target.files?.[0]); e.target.value = ""; }}
+        />
+        <div
+          className={`upload-drop ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
+          role="button"
+          tabIndex={0}
+          aria-label="엑셀 파일 선택 또는 드래그앤드랍"
+          onClick={() => inputRef.current?.click()}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputRef.current?.click(); } }}
+          onDragEnter={onDragEnter}
+          onDragOver={(e) => e.preventDefault()}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
+          {file ? (
+            <>
+              <div className="upload-drop-file">
+                <PRIcon name="Check" size={16} color="#00B468" />
+                <span className="name">{file.name}</span>
+                <span className="size">{fmtSize(file.size)}</span>
+                <button
+                  type="button"
+                  className="clear"
+                  aria-label="파일 선택 해제"
+                  onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                >
+                  <PRIcon name="X" size={13} />
+                </button>
+              </div>
+              <div className="upload-drop-sub">다른 파일을 끌어다 놓거나 클릭하여 교체</div>
+            </>
+          ) : (
+            <>
+              <PRIcon name="Upload" size={22} color="var(--pr-fg-muted)" />
+              <div className="upload-drop-main">엑셀 파일을 끌어다 놓거나 <span className="browse">클릭하여 선택</span></div>
+              <div className="upload-drop-sub">.xlsx · .xls</div>
+            </>
+          )}
+        </div>
         <button className="pr-btn pr-btn-primary pr-btn-sm" disabled={!file || busy}>
-          {busy ? "업로드 중…" : "업로드 & 적재"}
+          {busy ? "업로드 중…" : "업로드"}
         </button>
       </form>
       {result && (

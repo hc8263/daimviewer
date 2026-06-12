@@ -1528,6 +1528,49 @@ button { font: inherit; cursor: pointer; }
 .admin-result details { margin-top: 8px; }
 .admin-result summary { cursor: pointer; font-size: 12px; }
 
+/* 업로드 드롭존 */
+.admin-form-upload {
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: flex-start; margin-top: 14px;
+}
+.upload-drop {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--pr-border);
+  border-radius: 10px;
+  background: var(--pr-bg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.upload-drop:hover { border-color: var(--pr-fg-faint); }
+.upload-drop.dragging {
+  border-color: #0066FF;
+  background: rgba(0,102,255,0.06);
+}
+.upload-drop.has-file {
+  border-style: solid;
+  border-color: rgba(0,180,104,0.45);
+  background: rgba(0,180,104,0.05);
+}
+.upload-drop-main { font-size: 13px; color: var(--pr-fg); }
+.upload-drop-main .browse { color: #0066FF; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.upload-drop-sub { font-size: 11px; color: var(--pr-fg-faint); }
+.upload-drop-file { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+.upload-drop-file .name {
+  font-size: 13px; font-weight: 600; color: var(--pr-fg-strong);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 420px;
+}
+.upload-drop-file .size { font-size: 11px; color: var(--pr-fg-muted); }
+.upload-drop-file .clear {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 5px;
+  background: transparent; border: none; color: var(--pr-fg-muted); cursor: pointer;
+}
+.upload-drop-file .clear:hover { background: var(--pr-hover); color: var(--pr-fg); }
+
 /* 업로드 결과 상세 */
 .upload-counts { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .upload-sheet { margin-left: auto; font-size: 11px; color: var(--pr-fg-muted); }
