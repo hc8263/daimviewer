@@ -33,6 +33,7 @@ export type PatentRow = {
   status: string | null;
   description: string | null;
   description_ko: string | null;
+  claim_text: string | null;
   summary_md: string | null;
   easy_summary_md: string | null;
   admin_note: string | null;

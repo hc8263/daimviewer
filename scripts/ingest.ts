@@ -412,6 +412,7 @@ async function main() {
         ipc_main: r.ipc_main,
         status: r.status,
         description: r.description,
+        claim_text: null,
         summary_md: null,
         source_url: r.source_url,
         pdf_url: r.pdf_url,

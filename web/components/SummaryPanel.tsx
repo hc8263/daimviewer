@@ -116,6 +116,40 @@ function CommentBox({ wipsonKey, reviewer, initial, onSaved }: { wipsonKey: stri
   );
 }
 
+function splitClaimText(claimText: string): string[] {
+  const parts = claimText
+    .replace(/\r\n?/g, "\n")
+    .split(/\n+/)
+    .flatMap((line) => {
+      const chunks = line.split(/([:;,：；，])/);
+      const out: string[] = [];
+      for (let i = 0; i < chunks.length; i += 2) {
+        const body = (chunks[i] || "").trim();
+        const delimiter = chunks[i + 1] || "";
+        if (body) out.push(`${body}${delimiter}`.trim());
+      }
+      return out;
+    })
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return parts.length ? parts : [claimText.trim()];
+}
+
+function ClaimSection({ claimText }: { claimText?: string | null }) {
+  if (!claimText?.trim()) return null;
+  const paragraphs = splitClaimText(claimText);
+  return (
+    <section className="dp-claims" aria-label="청구항">
+      <h2>청구항</h2>
+      <div className="dp-claim-body">
+        {paragraphs.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function SummaryPanel({ patent, summaryMd, easySummaryMd, reviewer, decision, reviewCategory, setDecision, setReviewCategory, setComment }: {
   patent: PatentView;
   summaryMd: string;
@@ -247,6 +281,7 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, reviewer, decis
             )
           ) : patent.adminNote ? (
             <>
+              <ClaimSection claimText={patent.claimText} />
               <div className="dp-ai-note">
                 <PRIcon name="Info" size={12} color="#0066FF" />
                 관리자 메모 — 변리사가 직접 작성한 검토 요약입니다
@@ -255,6 +290,7 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, reviewer, decis
             </>
           ) : (
             <>
+              <ClaimSection claimText={patent.claimText} />
               {!patent.summaryMd && (
                 <div className="dp-ai-note">
                   <PRIcon name="Sparkles" size={12} color="#0066FF" />

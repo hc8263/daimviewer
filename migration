@@ -184,6 +184,7 @@ Vercel이 다음 작업을 **자동으로** 처리합니다:
      status           text,
      description      text,
      description_ko   text,
+     claim_text       text,
      summary_md       text,
      admin_note       text,
      source_url       text,
@@ -192,6 +193,7 @@ Vercel이 다음 작업을 **자동으로** 처리합니다:
      updated_at       timestamptz default now()
    );
    alter table patents add column if not exists admin_note text;
+   alter table patents add column if not exists claim_text text;
    create index if not exists patents_title_idx on patents using gin (to_tsvector('simple', title || ' ' || coalesce(title_ko,'')));
    create index if not exists patents_country_idx on patents (country);
    create index if not exists patents_appno_idx on patents (application_no);

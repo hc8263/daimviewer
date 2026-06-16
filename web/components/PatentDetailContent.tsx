@@ -49,6 +49,7 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
       description: patent.description,
       descriptionKo: patent.descriptionKo,
       summaryMd: patent.summaryMd ?? fromList.summaryMd,
+      claimText: patent.claimText,
     };
   }, [items, patent]);
 

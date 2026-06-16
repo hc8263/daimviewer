@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { sql, hasDb } from "@/lib/db";
 import { isAdmin } from "@/lib/admin";
+import { geminiGenerate } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export const maxDuration = 120;
 const FIELD_ALIASES: Record<string, string[]> = {
   wipson_key:       ["wips on key", "wipson on key", "wipsonkey", "wipson key", "wipson_on_key"],
   country:          ["국가", "country", "국가코드"],
+  claim_country:    ["db종류", "db 종류"],
   title:            ["발명의명칭", "발명의 명칭", "title", "명칭"],
   title_ko:         ["발명의 명칭-번역문", "발명의명칭(국문)", "title_ko", "명칭(국문)"],
   application_no:   ["출원번호", "application no", "application_no", "출원번호(국가)"],
@@ -22,12 +24,15 @@ const FIELD_ALIASES: Record<string, string[]> = {
   status:           ["분류", "상태", "status", "category", "기술분류1차"],
   major_category:   ["대분류", "major_category"],
   middle_category:  ["중분류", "middle_category"],
+  claim_text_ko:    ["대표청구항-번역문", "대표 청구항-번역문", "대표청구항 번역문"],
+  claim_text_raw:   ["대표청구항", "대표 청구항"],
   source_url:       ["상세보기 링크(비로그인)", "상세보기링크", "source_url"],
   pdf_url:          ["원문(pdf)링크", "원문pdf링크", "pdf_url", "원문링크"],
 };
 
 const FIELD_LABELS: Record<string, string> = {
   wipson_key: "WIPS ON Key", country: "국가", title: "발명의 명칭(원문)",
+  claim_country: "청구항 국가 기준", claim_text_ko: "대표청구항(번역문)", claim_text_raw: "대표청구항",
   title_ko: "발명의 명칭(국문)", application_no: "출원번호", application_date: "출원일",
   publication_no: "공개번호", registration_no: "등록번호", applicants: "출원인",
   inventors: "발명자", ipc_main: "IPC 메인", status: "분류",
@@ -37,6 +42,23 @@ const FIELD_LABELS: Record<string, string> = {
 
 function norm(s: string) {
   return s.toString().toLowerCase().replace(/[\s_\-\.]+/g, "").trim();
+}
+
+const CLAIM_TRANSLATE_SYSTEM_PROMPT = `[Role]
+당신은 특허 청구항 전문 번역가입니다.
+
+[Rules]
+1. 입력된 대표 청구항만 자연스럽고 정확한 한국어로 번역하세요.
+2. 번역 외의 설명, 요약, 주석은 절대 추가하지 마세요.
+3. 청구항의 구성요소 구분 기호(: , ;)와 도면부호, 번호, 약어는 최대한 보존하세요.
+`;
+
+function selectClaimText(countryValue: string | null, translated: string | null, raw: string | null) {
+  const country = (countryValue || "").trim().toUpperCase();
+  if (country === "CN" || country === "EP" || country === "US") return translated || raw;
+  if (country === "JP" || country === "KR") return raw || translated;
+  if (country === "DE") return raw || translated;
+  return translated || raw;
 }
 
 function buildHeaderMap(headers: string[]): Record<string, number> {
@@ -138,6 +160,7 @@ export async function POST(req: NextRequest) {
   const insertedKeys: string[] = [];
   const warnings: string[] = [];
   const seenInFile = new Set<string>();
+  const deClaimTranslationCache = new Map<string, string>();
 
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const r = rows[i];
@@ -155,6 +178,37 @@ export async function POST(req: NextRequest) {
     if (!title) {
       warnings.push(`행 ${i + 1}: 발명의 명칭이 비어 있습니다 (${wipsonKey})`);
     }
+    let claimText = selectClaimText(
+      String(get("claim_country") || get("country") || "").trim() || null,
+      String(get("claim_text_ko") || "").trim() || null,
+      String(get("claim_text_raw") || "").trim() || null,
+    );
+    const claimCountry = String(get("claim_country") || get("country") || "").trim().toUpperCase();
+    if (claimCountry === "DE" && claimText) {
+      const cached = deClaimTranslationCache.get(claimText);
+      if (cached) {
+        claimText = cached;
+      } else if (process.env.GEMINI_API_KEY) {
+        try {
+          const translatedClaim = (await geminiGenerate({
+            system: CLAIM_TRANSLATE_SYSTEM_PROMPT,
+            user: claimText,
+            temperature: 0.1,
+            maxOutputTokens: 4096,
+            timeoutMs: 45_000,
+            thinkingBudget: 0,
+          })).trim();
+          if (translatedClaim) {
+            deClaimTranslationCache.set(claimText, translatedClaim);
+            claimText = translatedClaim;
+          }
+        } catch (err) {
+          warnings.push(`행 ${i + 1}: DE 청구항 번역 실패 — 원문 저장 (${(err as Error).message})`);
+        }
+      } else {
+        warnings.push(`행 ${i + 1}: GEMINI_API_KEY가 없어 DE 청구항 원문을 저장했습니다 (${wipsonKey})`);
+      }
+    }
     const vals: Record<string, string | null> = {
       country: String(get("country") || "").trim() || null,
       title: title || wipsonKey,
@@ -169,6 +223,7 @@ export async function POST(req: NextRequest) {
       status: String(get("status") || "").trim() || null,
       major_category: String(get("major_category") || "").trim() || null,
       middle_category: String(get("middle_category") || "").trim() || null,
+      claim_text: claimText || null,
       source_url: String(get("source_url") || "").trim() || null,
       pdf_url: String(get("pdf_url") || "").trim() || null,
     };
@@ -184,12 +239,12 @@ export async function POST(req: NextRequest) {
           wipson_key, seq, country, title, title_ko,
           application_no, application_date, publication_no, registration_no,
           applicants, inventors, ipc_main, status,
-          major_category, middle_category, source_url, pdf_url, updated_at
+          major_category, middle_category, claim_text, source_url, pdf_url, updated_at
         ) values (
           ${wipsonKey}, (select coalesce(max(seq), 0) + 1 from patents), ${vals.country}, ${vals.title}, ${vals.title_ko},
           ${vals.application_no}, ${vals.application_date}, ${vals.publication_no}, ${vals.registration_no},
           ${vals.applicants}, ${vals.inventors}, ${vals.ipc_main}, ${vals.status},
-          ${vals.major_category}, ${vals.middle_category}, ${vals.source_url}, ${vals.pdf_url}, now()
+          ${vals.major_category}, ${vals.middle_category}, ${vals.claim_text}, ${vals.source_url}, ${vals.pdf_url}, now()
         )
         on conflict (wipson_key) do update set
           country = coalesce(excluded.country, patents.country),
@@ -205,6 +260,7 @@ export async function POST(req: NextRequest) {
           status = coalesce(excluded.status, patents.status),
           major_category = coalesce(excluded.major_category, patents.major_category),
           middle_category = coalesce(excluded.middle_category, patents.middle_category),
+          claim_text = coalesce(excluded.claim_text, patents.claim_text),
           source_url = coalesce(excluded.source_url, patents.source_url),
           pdf_url = coalesce(excluded.pdf_url, patents.pdf_url),
           updated_at = now()

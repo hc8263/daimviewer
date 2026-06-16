@@ -17,6 +17,7 @@ create table if not exists patents (
   middle_category  text,
   description      text,
   description_ko   text,
+  claim_text       text,
   summary_md       text,
   easy_summary_md  text,
   admin_note       text,
@@ -30,6 +31,7 @@ alter table patents add column if not exists admin_note text;
 alter table patents add column if not exists easy_summary_md text;
 alter table patents add column if not exists major_category text;
 alter table patents add column if not exists middle_category text;
+alter table patents add column if not exists claim_text text;
 -- 고정 표시 번호(seq): 기존 행은 당시 표시 순서(출원일 desc)대로 백필.
 -- 신규 행은 업로드 라우트가 insert 시점에 max(seq)+1을 명시 할당하므로
 -- 기존 넘버링이 오염되지 않는다. (default nextval은 upsert 충돌 행에서도

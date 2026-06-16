@@ -110,25 +110,59 @@ export const EASY_SUMMARY_SYSTEM_PROMPT = `너는 기술 특허를 일반인·�
 이 기술을 쓰면 사용자/제조사 입장에서 어떤 이점이 있는지 정리.
 `;
 
-type GeminiOpts = { system: string; user: string; temperature?: number };
+type GeminiOpts = {
+  system: string;
+  user: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+  thinkingBudget?: number;
+};
 
-export async function geminiGenerate({ system, user, temperature = 0.2 }: GeminiOpts): Promise<string> {
+export async function geminiGenerate({
+  system,
+  user,
+  temperature = 0.2,
+  maxOutputTokens = 65536,
+  timeoutMs,
+  thinkingBudget,
+}: GeminiOpts): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY가 설정되어 있지 않습니다");
+
+  const generationConfig: Record<string, unknown> = { temperature, maxOutputTokens };
+  if (thinkingBudget != null) {
+    generationConfig.thinkingConfig = { thinkingBudget };
+  }
 
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: "user", parts: [{ text: user }] }],
-    generationConfig: { temperature, maxOutputTokens: 65536 },
+    generationConfig,
   });
 
   let lastErr = "";
   for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(GEMINI_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-      body,
-    });
+    const controller = timeoutMs ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    let res: Response;
+    try {
+      res = await fetch(GEMINI_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+        body,
+        signal: controller?.signal,
+      });
+    } catch (err) {
+      lastErr = err instanceof Error ? err.message : String(err);
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+        continue;
+      }
+      throw new Error(lastErr);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
     if (res.status === 429 || res.status >= 500) {
       lastErr = `Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`;
       await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));

@@ -1409,6 +1409,33 @@ button { font: inherit; cursor: pointer; }
   color: var(--pr-fg-strong);
 }
 
+.dp-claims {
+  margin: 0 0 28px 0;
+}
+.dp-claims h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--pr-fg-strong);
+  letter-spacing: -0.005em;
+  margin: 0 0 12px 0;
+}
+.dp-claim-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.dp-claim-body p {
+  margin: 0;
+  padding-left: 2em;
+  text-indent: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.7;
+  color: var(--pr-fg);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 /* Translation accordion at the bottom of the summary */
 .dp-translation {
   margin-top: 40px;

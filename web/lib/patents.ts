@@ -29,6 +29,7 @@ export type PatentView = {
   sourceUrl: string;
   pdfUrl: string | null;
   summaryMd: string | null;
+  claimText?: string | null;
   description: string | null;
   descriptionKo: string | null;
   pdfFilename?: string | null;
@@ -79,6 +80,7 @@ function rowToView(r: RowExt): PatentView {
     sourceUrl: r.source_url || "#",
     pdfUrl: r.pdf_url,
     summaryMd: r.summary_md,
+    claimText: r.claim_text ?? null,
     description: r.description,
     descriptionKo: r.description_ko ?? null,
     pdfFilename: (r as any).pdf_filename ?? null,
@@ -104,7 +106,7 @@ export async function listPatents(opts?: { includeExcluded?: boolean }): Promise
              p.ipc_main, p.status, p.major_category, p.middle_category,
              p.source_url, p.pdf_url, p.pdf_filename,
              null::text as description, null::text as description_ko,
-             null::text as summary_md, p.admin_note,
+             null::text as summary_md, null::text as claim_text, p.admin_note,
              (p.created_at > now() - interval '7 days') as is_new,
              r.decision, r.review_category, r.reviewer,
              to_char(r.updated_at, 'YYYY-MM-DD') as review_date,
