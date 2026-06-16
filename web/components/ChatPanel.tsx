@@ -3,8 +3,9 @@ import React from "react";
 import { PRIcon } from "./icons";
 import type { PatentView } from "@/lib/patents";
 import { CHAT_MODELS, DEFAULT_CHAT_MODEL, isChatModel, type ChatModelId } from "@/lib/chatModels";
+import { isReviewer } from "@/lib/review";
 
-type Msg = { role: "user" | "assistant"; text: string };
+type Msg = { role: "user" | "assistant"; text: string; reviewer?: string | null };
 
 const MODEL_STORAGE_KEY = "daimviewer.chat.model";
 
@@ -23,6 +24,7 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
   const [draft, setDraft] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [model, setModel] = React.useState<ChatModelId>(DEFAULT_CHAT_MODEL);
+  const [reviewer, setReviewer] = React.useState("HW");
   const msgsRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -30,6 +32,20 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
       const stored = window.localStorage.getItem(MODEL_STORAGE_KEY);
       if (isChatModel(stored)) setModel(stored);
     } catch { /* ignore */ }
+  }, []);
+
+  React.useEffect(() => {
+    const read = () => {
+      const stored = window.localStorage.getItem("pr.reviewer");
+      setReviewer(isReviewer(stored) ? stored : "HW");
+    };
+    read();
+    const onReviewer = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (isReviewer(detail)) setReviewer(detail);
+    };
+    window.addEventListener("pr:reviewer", onReviewer);
+    return () => window.removeEventListener("pr:reviewer", onReviewer);
   }, []);
 
   const onChangeModel = (next: ChatModelId) => {
@@ -69,7 +85,7 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
 
   const send = async (text: string) => {
     if (!text.trim() || pending) return;
-    const userMsg: Msg = { role: "user", text };
+    const userMsg: Msg = { role: "user", text, reviewer };
     const history = [...messages, userMsg];
     setMessages(history);
     setDraft("");
@@ -84,6 +100,7 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           wipsonKey: patent.wipsonKey,
+          reviewer,
           model,
           messages: history.map((m) => ({ role: m.role, content: m.text })),
         }),
@@ -162,7 +179,7 @@ export function ChatPanel({ patent, showHeader = true }: { patent: PatentView; s
         {messages.map((m, i) => (
           <div key={i} className={`chat-row ${m.role === "user" ? "user" : "ai"}`}>
             <span className={`chat-avatar ${m.role === "user" ? "user" : "ai"}`}>
-              {m.role === "user" ? "박" : <PRIcon name="Bot" size={14} color="#fff" />}
+              {m.role === "user" ? (m.reviewer || reviewer) : <PRIcon name="Bot" size={14} color="#fff" />}
             </span>
             <div>
               <div

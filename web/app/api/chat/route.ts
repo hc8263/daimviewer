@@ -3,16 +3,17 @@ import { streamText, type ModelMessage } from "ai";
 import { getPatent, resolveSummary } from "@/lib/patents";
 import { sql } from "@/lib/db";
 import { DEFAULT_CHAT_MODEL, isChatModel } from "@/lib/chatModels";
+import { isReviewer } from "@/lib/review";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-async function logMessage(wipsonKey: string, role: "user" | "assistant", content: string) {
+async function logMessage(wipsonKey: string, reviewer: string, role: "user" | "assistant", content: string) {
   if (!sql || !content.trim()) return;
   try {
     await sql`
       insert into chat_messages (wipson_key, reviewer, role, content)
-      values (${wipsonKey}, null, ${role}, ${content})
+      values (${wipsonKey}, ${reviewer}, ${role}, ${content})
     `;
   } catch (err) {
     console.warn("[chat] failed to log message:", err);
@@ -50,12 +51,14 @@ export async function POST(req: NextRequest) {
   if (!body?.wipsonKey || !Array.isArray(body?.messages)) {
     return new Response("wipsonKey and messages required", { status: 400 });
   }
-  const { wipsonKey, messages, model: requestedModel } = body as {
+  const { wipsonKey, messages, model: requestedModel, reviewer: requestedReviewer } = body as {
     wipsonKey: string;
     messages: Array<{ role: "user" | "assistant"; content: string }>;
     model?: string;
+    reviewer?: string;
   };
   const model = isChatModel(requestedModel) ? requestedModel : DEFAULT_CHAT_MODEL;
+  const reviewer = isReviewer(requestedReviewer) ? requestedReviewer : "HW";
 
   const patent = await getPatent(wipsonKey);
   if (!patent) return new Response("patent not found", { status: 404 });
@@ -65,7 +68,7 @@ export async function POST(req: NextRequest) {
   // logged yet.
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   const lastUserText = lastUser?.content ?? "";
-  if (lastUserText) await logMessage(wipsonKey, "user", lastUserText);
+  if (lastUserText) await logMessage(wipsonKey, reviewer, "user", lastUserText);
   const summaryMd = resolveSummary(patent);
   const systemText = buildSystem(patent, summaryMd);
 
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
             await new Promise((r) => setTimeout(r, 6));
           }
           controller.close();
-          await logMessage(wipsonKey, "assistant", mock);
+          await logMessage(wipsonKey, reviewer, "assistant", mock);
         },
       }),
       { headers: { "content-type": "text/plain; charset=utf-8" } }
@@ -97,7 +100,7 @@ export async function POST(req: NextRequest) {
       console.error("[chat] streamText error:", error);
     },
     onFinish({ text }) {
-      void logMessage(wipsonKey, "assistant", text);
+      void logMessage(wipsonKey, reviewer, "assistant", text);
     },
   });
 
