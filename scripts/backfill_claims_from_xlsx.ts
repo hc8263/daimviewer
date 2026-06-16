@@ -16,6 +16,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createRequire } from "node:module";
 import { geminiGenerate } from "../web/lib/gemini";
+import { normalizeClaimText } from "../web/lib/claimText";
 
 const ROOT = "/Users/vincentlim/coding/dmpat_patent_anal";
 const XLSX_PATH = path.join(ROOT, "4_정량분석용파일_최종.xlsx");
@@ -162,6 +163,7 @@ async function main() {
       if (row.claimCountry.toUpperCase() === "DE") {
         claimText = await translateGermanClaim(claimText, deTranslationCache);
       }
+      claimText = normalizeClaimText(claimText);
 
       const result = await client.query(
         `update patents

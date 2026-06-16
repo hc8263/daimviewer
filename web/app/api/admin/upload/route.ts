@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { sql, hasDb } from "@/lib/db";
 import { isAdmin } from "@/lib/admin";
 import { geminiGenerate } from "@/lib/gemini";
+import { normalizeClaimText } from "@/lib/claimText";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -208,6 +209,9 @@ export async function POST(req: NextRequest) {
       } else {
         warnings.push(`행 ${i + 1}: GEMINI_API_KEY가 없어 DE 청구항 원문을 저장했습니다 (${wipsonKey})`);
       }
+    }
+    if (claimText) {
+      claimText = normalizeClaimText(claimText);
     }
     const vals: Record<string, string | null> = {
       country: String(get("country") || "").trim() || null,
