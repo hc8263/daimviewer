@@ -8,6 +8,7 @@ import {
   SUMMARIZE_SYSTEM_PROMPT,
   EASY_SUMMARY_SYSTEM_PROMPT,
 } from "@/lib/gemini";
+import { normalizeEasySummary } from "@/lib/summaryText";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,7 +133,7 @@ export async function POST(req: NextRequest) {
       `[Country] ${p.country || ""}\n` +
       `[Title] ${p.title_ko || p.title}\n\n` +
       `[Specification Text]\n${text}`;
-    const easy = await geminiGenerate({ system: EASY_SUMMARY_SYSTEM_PROMPT, user, temperature: 0.4 });
+    const easy = normalizeEasySummary(await geminiGenerate({ system: EASY_SUMMARY_SYSTEM_PROMPT, user, temperature: 0.4 }));
     await sql`
       update patents set easy_summary_md = ${easy}, updated_at = now()
        where wipson_key = ${wipsonKey}

@@ -13,6 +13,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { Pool } from "@neondatabase/serverless";
+import { normalizeEasySummary } from "../web/lib/summaryText";
 
 function loadEnv(file: string) {
   if (!fs.existsSync(file)) return;
@@ -104,7 +105,7 @@ async function main() {
     if (!text || !text.trim()) { missingText++; continue; }
     const wkey = resolveWipsonKey(key);
     if (!wkey) { missingDb++; continue; }
-    updates.push({ wipsonKey: wkey, key, text });
+    updates.push({ wipsonKey: wkey, key, text: normalizeEasySummary(text) });
   }
 
   const toApply = args.limit ? updates.slice(0, args.limit) : updates;
