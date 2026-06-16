@@ -117,21 +117,41 @@ function CommentBox({ wipsonKey, reviewer, initial, onSaved }: { wipsonKey: stri
 }
 
 function splitClaimText(claimText: string): string[] {
-  const parts = claimText
-    .replace(/\r\n?/g, "\n")
-    .split(/\n+/)
-    .flatMap((line) => {
-      const chunks = line.split(/([:;,：；，])/);
-      const out: string[] = [];
-      for (let i = 0; i < chunks.length; i += 2) {
-        const body = (chunks[i] || "").trim();
-        const delimiter = chunks[i + 1] || "";
-        if (body) out.push(`${body}${delimiter}`.trim());
+  const text = claimText.replace(/\s+/g, " ").trim();
+  const parts: string[] = [];
+  let buffer = "";
+  let depth = 0;
+  const opens = new Set(["(", "[", "{", "（", "［", "｛", "【"]);
+  const closes = new Set([")", "]", "}", "）", "］", "｝", "】"]);
+  const delimiters = new Set([":", ";", ",", "：", "；", "，"]);
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    buffer += ch;
+
+    if (opens.has(ch)) {
+      depth++;
+      continue;
+    }
+    if (closes.has(ch)) {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+
+    if (depth === 0 && delimiters.has(ch)) {
+      const prev = text[i - 1] || "";
+      const next = text[i + 1] || "";
+      if ((ch === "," || ch === "，") && /\d/.test(prev) && /\d/.test(next)) {
+        continue;
       }
-      return out;
-    })
-    .map((part) => part.trim())
-    .filter(Boolean);
+      const part = buffer.trim();
+      if (part) parts.push(part);
+      buffer = "";
+    }
+  }
+
+  const rest = buffer.trim();
+  if (rest) parts.push(rest);
   return parts.length ? parts : [claimText.trim()];
 }
 
