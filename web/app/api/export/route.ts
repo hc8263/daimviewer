@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql, hasDb } from "@/lib/db";
+import { DECISION_LABEL, isReviewDecision } from "@/lib/review";
 
 export const runtime = "nodejs";
 
@@ -9,12 +10,6 @@ function csvEscape(v: unknown): string {
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
-
-const DECISION_LABEL: Record<string, string> = {
-  relevant: "S등급",
-  maybe: "A등급",
-  irrelevant: "B등급",
-};
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -38,11 +33,11 @@ async function runExport(keys: string[]) {
                to_char(p.application_date, 'YYYY-MM-DD') as application_date,
                p.publication_no, p.registration_no,
                p.applicants, p.inventors, p.ipc_main, p.status,
-               r.decision, r.note, r.reviewer,
+               r.decision, r.review_category, r.note, r.reviewer,
                to_char(r.updated_at, 'YYYY-MM-DD') as review_date
           from patents p
           left join lateral (
-            select decision, note, reviewer, updated_at, excluded
+            select decision, review_category, note, reviewer, updated_at, excluded
               from reviews
              where reviews.wipson_key = p.wipson_key
              order by updated_at desc
@@ -57,11 +52,11 @@ async function runExport(keys: string[]) {
                to_char(p.application_date, 'YYYY-MM-DD') as application_date,
                p.publication_no, p.registration_no,
                p.applicants, p.inventors, p.ipc_main, p.status,
-               r.decision, r.note, r.reviewer,
+               r.decision, r.review_category, r.note, r.reviewer,
                to_char(r.updated_at, 'YYYY-MM-DD') as review_date
           from patents p
           left join lateral (
-            select decision, note, reviewer, updated_at, excluded
+            select decision, review_category, note, reviewer, updated_at, excluded
               from reviews
              where reviews.wipson_key = p.wipson_key
              order by updated_at desc
@@ -75,15 +70,15 @@ async function runExport(keys: string[]) {
     publication_no: string | null; registration_no: string | null;
     applicants: string | null; inventors: string | null;
     ipc_main: string | null; status: string | null;
-    decision: string | null; note: string | null;
+    decision: string | null; review_category: string | null; note: string | null;
     reviewer: string | null; review_date: string | null;
   }>;
 
   const headers = [
     "WIPSONKEY", "국가", "발명의명칭", "발명의명칭(KO)",
     "출원번호", "출원일자", "공개번호", "등록번호",
-    "출원인", "발명자", "IPC메인", "분류",
-    "등급", "코멘트", "검토자", "검토일",
+    "출원인", "발명자", "IPC메인", "원본분류",
+    "1차분류", "2차등급", "코멘트", "검토자", "검토일",
   ];
   const lines = [headers.join(",")];
   for (const r of rows) {
@@ -92,7 +87,8 @@ async function runExport(keys: string[]) {
       r.application_no, r.application_date,
       r.publication_no, r.registration_no,
       r.applicants, r.inventors, r.ipc_main, r.status,
-      r.decision ? (DECISION_LABEL[r.decision] || r.decision) : "",
+      r.review_category || "미분류",
+      r.decision ? (isReviewDecision(r.decision) ? DECISION_LABEL[r.decision] : r.decision) : "",
       r.note, r.reviewer, r.review_date,
     ].map(csvEscape).join(","));
   }

@@ -5,6 +5,7 @@ import { SummaryPanel } from "./SummaryPanel";
 import { ChatPanel } from "./ChatPanel";
 import { usePatents } from "./PatentsContext";
 import type { PatentView } from "@/lib/patents";
+import { isReviewer } from "@/lib/review";
 
 const RIGHT_DEFAULT = 380;
 const RIGHT_MIN = 320;
@@ -23,6 +24,20 @@ function readStored(key: string, fallback: number, min: number, max: number) {
 
 export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { patent: PatentView; summaryMd: string; easySummaryMd?: string | null }) {
   const { items, updateLocal } = usePatents();
+  const [reviewer, setReviewer] = React.useState("HW");
+  React.useEffect(() => {
+    const read = () => {
+      const stored = localStorage.getItem("pr.reviewer");
+      setReviewer(isReviewer(stored) ? stored : "HW");
+    };
+    read();
+    const onReviewer = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (isReviewer(detail)) setReviewer(detail);
+    };
+    window.addEventListener("pr:reviewer", onReviewer);
+    return () => window.removeEventListener("pr:reviewer", onReviewer);
+  }, []);
 
   // Merge lightweight metadata from the shared list with the heavy fields
   // (description, summary_md) loaded for this specific patent.
@@ -38,18 +53,29 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
   }, [items, patent]);
 
   const [decision, setDecisionState] = React.useState<string | null>(patent.reviewStatus);
+  const [reviewCategory, setReviewCategoryState] = React.useState<string | null>(patent.reviewCategory ?? null);
   React.useEffect(() => {
     setDecisionState(patent.reviewStatus);
-  }, [patent.wipsonKey, patent.reviewStatus]);
+    setReviewCategoryState(patent.reviewCategory ?? null);
+  }, [patent.wipsonKey, patent.reviewStatus, patent.reviewCategory]);
 
   const setDecision = React.useCallback((d: string | null) => {
     setDecisionState(d);
     updateLocal(patent.wipsonKey, {
       reviewStatus: d,
-      reviewer: d ? (activePatent.reviewer || "USER") : null,
+      reviewer: d ? (activePatent.reviewer || reviewer) : null,
       reviewDate: d ? (activePatent.reviewDate || new Date().toISOString().slice(0, 10)) : null,
     });
-  }, [patent.wipsonKey, activePatent.reviewer, activePatent.reviewDate, updateLocal]);
+  }, [patent.wipsonKey, activePatent.reviewer, activePatent.reviewDate, reviewer, updateLocal]);
+
+  const setReviewCategory = React.useCallback((category: string | null) => {
+    setReviewCategoryState(category);
+    updateLocal(patent.wipsonKey, {
+      reviewCategory: category,
+      reviewer: category ? (activePatent.reviewer || reviewer) : activePatent.reviewer,
+      reviewDate: category ? (activePatent.reviewDate || new Date().toISOString().slice(0, 10)) : activePatent.reviewDate,
+    });
+  }, [patent.wipsonKey, activePatent.reviewer, activePatent.reviewDate, reviewer, updateLocal]);
 
   const setComment = React.useCallback((note: string) => {
     updateLocal(patent.wipsonKey, { comment: note });
@@ -71,7 +97,7 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
 
   return (
     <>
-      <SummaryPanel patent={activePatent} summaryMd={summaryMd} easySummaryMd={easySummaryMd ?? null} decision={decision} setDecision={setDecision} setComment={setComment} />
+      <SummaryPanel patent={activePatent} summaryMd={summaryMd} easySummaryMd={easySummaryMd ?? null} reviewer={reviewer} decision={decision} reviewCategory={reviewCategory} setDecision={setDecision} setReviewCategory={setReviewCategory} setComment={setComment} />
       <Splitter onResize={onResizeRight} />
       <div className="dp-chat-right" style={{ width: rightW }} suppressHydrationWarning>
         <ChatPanel patent={activePatent} />

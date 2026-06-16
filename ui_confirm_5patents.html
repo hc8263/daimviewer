@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>다임뷰어 UI 확인용 - 5건 샘플</title>
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --surface: #ffffff;
+      --surface-alt: #f4f4f5;
+      --border: #dbdcdf;
+      --divider: #eaebec;
+      --fg: #292a2d;
+      --fg-strong: #171719;
+      --fg-muted: #70737c;
+      --fg-faint: #989ba2;
+      --blue: #0066ff;
+      --blue-bg: #eaf2fe;
+      --green: #009632;
+      --green-bg: #f2fff6;
+      --orange: #ff9200;
+      --orange-bg: #fef4e6;
+      --font: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      font-size: 14px;
+    }
+    button, input, select { font: inherit; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: var(--fg-strong);
+      white-space: nowrap;
+    }
+    .brand-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--fg-strong);
+      color: #fff;
+      font-size: 13px;
+    }
+    .brand-accent { color: var(--blue); }
+    .crumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--fg-muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+    .crumbs strong { color: var(--fg-strong); }
+    .spacer { flex: 1; }
+    .iconbtn {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--fg-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .iconbtn:hover { background: var(--surface-alt); color: var(--fg); }
+    .reviewer-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .reviewer-select {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface-alt);
+      color: var(--fg-muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .reviewer-select select {
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--fg-strong);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      min-height: calc(100vh - 52px);
+    }
+    .rail {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .section { display: flex; flex-direction: column; gap: 4px; }
+    .section-h {
+      padding: 0 8px 4px;
+      color: var(--fg-faint);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--fg);
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .nav-item.active {
+      background: var(--surface-alt);
+      color: var(--fg-strong);
+      font-weight: 700;
+    }
+    .nav-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid var(--fg-faint);
+      flex: 0 0 auto;
+    }
+    .nav-icon.green { border-radius: 4px; border-color: var(--green); background: var(--green-bg); }
+    .nav-icon.blue { border-color: var(--blue); }
+    .nav-icon.orange { border-color: var(--orange); }
+    .nav-icon.gray { border-color: #878a93; }
+    .count {
+      margin-left: auto;
+      color: var(--fg-faint);
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .main { min-width: 0; display: flex; flex-direction: column; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 52px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .toolbar .title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--fg-strong);
+      white-space: nowrap;
+    }
+    .subtitle { color: var(--fg-muted); font-size: 12px; font-weight: 600; }
+    .progress {
+      margin-left: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--fg-muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .bar { width: 120px; height: 4px; border-radius: 2px; background: var(--divider); overflow: hidden; }
+    .bar > span { display: block; width: 80%; height: 100%; background: var(--fg-strong); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--fg);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .filterbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: var(--surface-alt);
+      color: var(--fg);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .search {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 280px;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--divider);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--fg-muted);
+    }
+    .search input {
+      border: 0;
+      outline: 0;
+      min-width: 0;
+      flex: 1;
+      color: var(--fg);
+      background: transparent;
+      font-size: 13px;
+    }
+    .table-wrap {
+      margin: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td {
+      height: 46px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--divider);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+    }
+    th {
+      height: 36px;
+      background: var(--surface-alt);
+      color: var(--fg-muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr.selected td { background: #f7fbff; }
+    tbody tr[data-detail] { cursor: pointer; }
+    tbody tr[data-detail]:hover td { background: #fbfdff; }
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .checkbox.checked { border-color: var(--blue); background: var(--blue); }
+    .mono { font-family: var(--mono); font-size: 12px; }
+    .flag {
+      display: inline-flex;
+      width: 22px;
+      height: 16px;
+      border: 1px solid #c2c4c8;
+      border-radius: 3px;
+      align-items: center;
+      justify-content: center;
+      font: 700 9px var(--mono);
+      color: #000;
+      background: #fff;
+    }
+    .title-cell {
+      color: var(--fg-strong);
+      font-weight: 700;
+    }
+    .applicant {
+      display: block;
+      margin-top: 3px;
+      color: var(--fg-muted);
+      font-size: 11px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 6px;
+      border: 1px solid var(--divider);
+      border-radius: 4px;
+      background: var(--surface-alt);
+      color: var(--fg);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .tag.primary {
+      background: var(--green-bg);
+      border-color: #acfcc7;
+      color: #007a29;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .pill .dot { width: 6px; height: 6px; border-radius: 999px; }
+    .pill.s { background: var(--blue-bg); color: #005eeb; }
+    .pill.s .dot { background: var(--blue); }
+    .pill.a { background: var(--orange-bg); color: #9c5800; }
+    .pill.a .dot { background: var(--orange); }
+    .pill.b { background: #eaebec; color: #5a5c63; }
+    .pill.b .dot { background: #878a93; }
+    .pill.none {
+      border: 1px dashed var(--border);
+      color: var(--fg-faint);
+      background: transparent;
+    }
+    .pill.none .dot { background: var(--fg-faint); opacity: .5; }
+    .footer {
+      padding: 10px 20px 18px;
+      color: var(--fg-muted);
+      font-size: 12px;
+    }
+    .note {
+      margin: 0 20px 16px;
+      padding: 12px 14px;
+      border: 1px solid #c9defe;
+      border-radius: 8px;
+      background: #f7fbff;
+      color: #003e9c;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .detail { display: none; min-height: calc(100vh - 52px); background: var(--bg); }
+    .detail.on { display: grid; grid-template-columns: 320px minmax(0, 1fr); }
+    .detail-rail {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 14px;
+      overflow: auto;
+    }
+    .detail-rail-h {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--fg-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .rail-card {
+      display: block;
+      padding: 10px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+    .rail-card:hover { background: var(--surface-alt); }
+    .rail-card.active {
+      background: #f7fbff;
+      border-color: #c9defe;
+    }
+    .rail-card .key {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--fg-muted);
+      font: 700 11px var(--mono);
+      margin-bottom: 6px;
+    }
+    .rail-card .name {
+      color: var(--fg-strong);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+      white-space: normal;
+    }
+    .rail-card .meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .detail-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .detail-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+    }
+    .detail-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .detail-title {
+      flex: 1;
+      min-width: 260px;
+      margin: 0;
+      color: var(--fg-strong);
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .segmented {
+      display: inline-flex;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface-alt);
+    }
+    .segmented button {
+      height: 28px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--fg-muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .segmented button.on {
+      background: #fff;
+      color: var(--fg-strong);
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .segmented.category button.on { color: #007a29; }
+    .segmented.grade button.on.s { color: #005eeb; }
+    .segmented.grade button.on.a { color: #9c5800; }
+    .segmented.grade button.on.b { color: #46474c; }
+    .control-label {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 6px;
+      color: var(--fg-faint);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .detail-meta {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--fg-muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .detail-meta b {
+      color: var(--fg-faint);
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .detail-body {
+      overflow: auto;
+      padding: 24px 20px 56px;
+    }
+    .detail-card {
+      max-width: 1040px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+    .comment {
+      margin-bottom: 18px;
+    }
+    .comment-h {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      color: var(--fg-strong);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .comment textarea {
+      width: 100%;
+      min-height: 58px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--fg);
+      background: #fff;
+      font: 13px/1.5 var(--font);
+    }
+    .ai-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 18px;
+      padding: 6px 10px;
+      border: 1px solid rgba(0,102,255,.18);
+      border-radius: 6px;
+      background: rgba(0,102,255,.06);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .md h2 {
+      margin: 28px 0 10px;
+      padding-top: 14px;
+      border-top: 1px solid var(--divider);
+      color: var(--fg-strong);
+      font-size: 16px;
+    }
+    .md h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+    .md p, .md li {
+      color: var(--fg);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.75;
+    }
+    .md ul { padding-left: 18px; }
+    .hidden { display: none !important; }
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 180px minmax(720px, 1fr); }
+      .detail.on { grid-template-columns: 240px minmax(760px, 1fr); }
+      body { overflow-x: auto; }
+      .crumbs { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">다</span>다임<span class="brand-accent">뷰어</span></div>
+      <div class="crumbs"><span>프로젝트</span><span>&gt;</span><span>2026 신규 개발 검토</span><span>&gt;</span><strong>특허 5건</strong></div>
+      <div class="spacer"></div>
+      <button class="iconbtn" title="다크 모드">◐</button>
+      <div class="reviewer-control">
+        <label class="reviewer-select">
+          <span>계정</span>
+          <select aria-label="검토 계정">
+            <option>HW</option>
+            <option>SW</option>
+            <option>MEC</option>
+            <option>SYS</option>
+            <option>TEST</option>
+          </select>
+        </label>
+        <button class="iconbtn" title="비밀번호 변경">🔒</button>
+      </div>
+      <button class="iconbtn" title="관리자 모드">⚙</button>
+    </header>
+
+    <div class="shell" id="listView">
+      <aside class="rail">
+        <section class="section">
+          <div class="section-h">1차 분류</div>
+          <div class="nav-item active"><span class="nav-icon green"></span>전체<span class="count">5</span></div>
+          <div class="nav-item"><span class="nav-icon"></span>미분류<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon green"></span>HW<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon green"></span>SW<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon green"></span>MEC<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon green"></span>SYS<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon green"></span>TEST<span class="count">0</span></div>
+        </section>
+
+        <section class="section">
+          <div class="section-h">2차 등급</div>
+          <div class="nav-item"><span class="nav-icon"></span>전체<span class="count">5</span></div>
+          <div class="nav-item"><span class="nav-icon"></span>미검토<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon blue"></span>S등급<span class="count">2</span></div>
+          <div class="nav-item"><span class="nav-icon orange"></span>A등급<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon gray"></span>B등급<span class="count">1</span></div>
+          <div class="nav-item"><span class="nav-icon gray"></span>삭제됨<span class="count">0</span></div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <div class="toolbar">
+          <span class="title">특허 목록</span>
+          <span class="subtitle">5건 / 총 5건</span>
+          <div class="progress"><span>4/5</span><span class="bar"><span></span></span><span style="color:var(--fg)">80%</span></div>
+          <div class="spacer"></div>
+          <button class="btn">CSV 내보내기</button>
+        </div>
+
+        <div class="filterbar">
+          <button class="chip">필터</button>
+          <button class="chip">국가 <strong>전체</strong></button>
+          <div class="search">
+            <span>⌕</span>
+            <input value="" placeholder="검색: CN_115991160, 제목, 출원인..." />
+          </div>
+          <div class="spacer"></div>
+          <span class="subtitle">정렬:</span>
+          <button class="chip">출원일 ↓</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <colgroup>
+              <col style="width:36px" />
+              <col style="width:44px" />
+              <col style="width:36px" />
+              <col style="width:150px" />
+              <col />
+              <col style="width:110px" />
+              <col style="width:95px" />
+              <col style="width:105px" />
+              <col style="width:85px" />
+              <col style="width:80px" />
+              <col style="width:90px" />
+              <col style="width:90px" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th><span class="checkbox"></span></th>
+                <th>#</th>
+                <th></th>
+                <th>WIPSONKEY</th>
+                <th>제목 · 출원인</th>
+                <th>분류</th>
+                <th>출원일</th>
+                <th>공개번호</th>
+                <th>1차분류</th>
+                <th>검토자</th>
+                <th>2차등급</th>
+                <th>검토일</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected" data-detail="8426171085343">
+                <td><span class="checkbox checked">✓</span></td>
+                <td class="mono">1</td>
+                <td><span class="flag">CN</span></td>
+                <td class="mono">8426171085343</td>
+                <td class="title-cell">Vehicle power distribution method and related equipment<span class="applicant">Huawei Technologies Co., Ltd. · Li Wei 외 3인</span></td>
+                <td><span class="tag">전력제어</span></td>
+                <td class="mono">2024-01-12</td>
+                <td class="mono">CN117812345A</td>
+                <td><span class="tag primary">HW</span></td>
+                <td>HW</td>
+                <td><span class="pill s" title="등록된 특허로서 청구항과 우리 개발안을 비교했을 때 침해 가능성이 있음"><span class="dot"></span>S등급</span></td>
+                <td class="mono">2026-06-16</td>
+              </tr>
+              <tr data-detail="KR1020240034512">
+                <td><span class="checkbox"></span></td>
+                <td class="mono">2</td>
+                <td><span class="flag">KR</span></td>
+                <td class="mono">KR1020240034512</td>
+                <td class="title-cell">3차원 적층 NAND 플래시 메모리 셀 구조 및 제조 방법<span class="applicant">SK하이닉스(주) · 김도은 외 5인</span></td>
+                <td><span class="tag">반도체</span></td>
+                <td class="mono">2024-02-28</td>
+                <td class="mono">KR20240090512</td>
+                <td><span class="tag primary">SW</span></td>
+                <td>SW</td>
+                <td><span class="pill a" title="미등록(심사중, 출원 etc) 중 특허로 청구항과 우리 개발안을 비교했을 때 침해 가능성이 있거나 우리 개발안이 채택할 가능성이 있음"><span class="dot"></span>A등급</span></td>
+                <td class="mono">2026-06-15</td>
+              </tr>
+              <tr data-detail="US20240245612A1">
+                <td><span class="checkbox"></span></td>
+                <td class="mono">3</td>
+                <td><span class="flag">US</span></td>
+                <td class="mono">US20240245612A1</td>
+                <td class="title-cell">Hybrid bonding process for chiplet integration<span class="applicant">TSMC · Wu Chen-Hua 외 2인</span></td>
+                <td><span class="tag">패키징</span></td>
+                <td class="mono">2024-02-09</td>
+                <td class="mono">US20240245612</td>
+                <td><span class="tag primary">MEC</span></td>
+                <td>MEC</td>
+                <td><span class="pill b" title="명확한 비침해 포인트 특정가능하거나 우리 개발안과 관련성이 낮음"><span class="dot"></span>B등급</span></td>
+                <td class="mono">2026-06-14</td>
+              </tr>
+              <tr data-detail="JP2024043301A">
+                <td><span class="checkbox"></span></td>
+                <td class="mono">4</td>
+                <td><span class="flag">JP</span></td>
+                <td class="mono">JP2024043301A</td>
+                <td class="title-cell">Display module cooling structure for vehicle cockpit<span class="applicant">Denso Corporation · Sato Ken 외 1인</span></td>
+                <td><span class="tag">디스플레이</span></td>
+                <td class="mono">2024-03-05</td>
+                <td class="mono">JP2024043301</td>
+                <td><span class="tag primary">SYS</span></td>
+                <td>SYS</td>
+                <td><span class="pill s" title="등록된 특허로서 청구항과 우리 개발안을 비교했을 때 침해 가능성이 있음"><span class="dot"></span>S등급</span></td>
+                <td class="mono">2026-06-13</td>
+              </tr>
+              <tr data-detail="EP4312210A1">
+                <td><span class="checkbox"></span></td>
+                <td class="mono">5</td>
+                <td><span class="flag">EP</span></td>
+                <td class="mono">EP4312210A1</td>
+                <td class="title-cell">Battery management system with predictive thermal control<span class="applicant">Bosch GmbH · Müller Anna 외 4인</span></td>
+                <td><span class="tag">배터리</span></td>
+                <td class="mono">2024-04-18</td>
+                <td class="mono">EP4312210</td>
+                <td><span style="color:var(--fg-faint)">미분류</span></td>
+                <td><span style="color:var(--fg-faint)">-</span></td>
+                <td><span class="pill none"><span class="dot"></span>미검토</span></td>
+                <td><span style="color:var(--fg-faint)">-</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          확인 포인트: 좌측 필터에서 <strong>1차 분류가 2차 등급보다 위</strong>에 위치합니다.
+          상단 계정은 HW/SW/MEC/SYS/TEST 중 선택하며, 실제 앱에서는 계정 변경 시 비밀번호 입력이 필요하고 기본 비밀번호는 1입니다.
+          표 데이터는 확인용 5건 샘플이며 실제 전체 특허 데이터가 아닙니다.
+        </div>
+        <div class="footer">5건 표시 · 총 5건</div>
+      </main>
+    </div>
+
+    <div class="detail" id="detailView">
+      <aside class="detail-rail">
+        <div class="detail-rail-h">
+          <button class="btn" type="button" id="backToList">← 목록</button>
+          <span>검토 중 · 5건</span>
+        </div>
+        <div class="rail-card active" data-detail-nav="8426171085343">
+          <div class="key"><span class="flag">CN</span>8426171085343</div>
+          <div class="name">Vehicle power distribution method and related equipment</div>
+          <div class="meta"><span class="pill s"><span class="dot"></span>S등급</span><span class="tag primary">HW</span></div>
+        </div>
+        <div class="rail-card" data-detail-nav="KR1020240034512">
+          <div class="key"><span class="flag">KR</span>KR1020240034512</div>
+          <div class="name">3차원 적층 NAND 플래시 메모리 셀 구조 및 제조 방법</div>
+          <div class="meta"><span class="pill a"><span class="dot"></span>A등급</span><span class="tag primary">SW</span></div>
+        </div>
+        <div class="rail-card" data-detail-nav="US20240245612A1">
+          <div class="key"><span class="flag">US</span>US20240245612A1</div>
+          <div class="name">Hybrid bonding process for chiplet integration</div>
+          <div class="meta"><span class="pill b"><span class="dot"></span>B등급</span><span class="tag primary">MEC</span></div>
+        </div>
+        <div class="rail-card" data-detail-nav="JP2024043301A">
+          <div class="key"><span class="flag">JP</span>JP2024043301A</div>
+          <div class="name">Display module cooling structure for vehicle cockpit</div>
+          <div class="meta"><span class="pill s"><span class="dot"></span>S등급</span><span class="tag primary">SYS</span></div>
+        </div>
+        <div class="rail-card" data-detail-nav="EP4312210A1">
+          <div class="key"><span class="flag">EP</span>EP4312210A1</div>
+          <div class="name">Battery management system with predictive thermal control</div>
+          <div class="meta"><span class="pill none"><span class="dot"></span>미검토</span><span style="color:var(--fg-faint);font-size:11px;font-weight:700">미분류</span></div>
+        </div>
+      </aside>
+
+      <main class="detail-main">
+        <div class="detail-header">
+          <div class="detail-top">
+            <h1 class="detail-title" id="detailTitle">Vehicle power distribution method and related equipment</h1>
+            <div class="segmented">
+              <button class="on">이해하기 쉬운 ver</button>
+              <button>명세서 중심의 요약</button>
+            </div>
+            <button class="btn">원문 보기</button>
+          </div>
+          <div class="detail-top">
+            <span class="mono" id="detailKey">8426171085343</span>
+            <span class="flag" id="detailCountry">CN</span>
+            <span class="tag" id="detailClassifier">전력제어</span>
+            <span class="subtitle">IPC <strong class="mono" id="detailIpc">H02J 3/00</strong></span>
+            <div class="spacer"></div>
+            <div class="segmented category" aria-label="1차 분류">
+              <span class="control-label">1차</span>
+              <button data-cat="HW" class="on">HW</button>
+              <button data-cat="SW">SW</button>
+              <button data-cat="MEC">MEC</button>
+              <button data-cat="SYS">SYS</button>
+              <button data-cat="TEST">TEST</button>
+            </div>
+            <div class="segmented grade" aria-label="2차 등급">
+              <button data-grade="s" class="on s" title="등록된 특허로서 청구항과 우리 개발안을 비교했을 때 침해 가능성이 있음">S등급</button>
+              <button data-grade="a" title="미등록(심사중, 출원 etc) 중 특허로 청구항과 우리 개발안을 비교했을 때 침해 가능성이 있거나 우리 개발안이 채택할 가능성이 있음">A등급</button>
+              <button data-grade="b" title="명확한 비침해 포인트 특정가능하거나 우리 개발안과 관련성이 낮음">B등급</button>
+            </div>
+          </div>
+          <div class="detail-meta">
+            <span><b>출원인</b><span id="detailApplicant">Huawei Technologies Co., Ltd.</span></span>
+            <span><b>발명자</b><span id="detailInventor">Li Wei 외 3인</span></span>
+            <span><b>출원일</b><span class="mono" id="detailDate">2024-01-12</span></span>
+            <span><b>공개번호</b><span class="mono" id="detailPub">CN117812345A</span></span>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="detail-card">
+            <div class="comment">
+              <div class="comment-h">💬 코멘트 <span class="subtitle" style="margin-left:auto">저장됨</span></div>
+              <textarea id="detailComment" placeholder="이 특허에 대한 코멘트를 남겨주세요">HW 관점에서 전원 분배 로직 비교 필요. 청구항 1, 4 우선 검토.</textarea>
+            </div>
+            <div class="ai-note">✨ 이해하기 쉬운 ver</div>
+            <div class="md" id="detailSummary">
+              <h2>검토 요약</h2>
+              <p>차량 내 여러 전장 부하에 전력을 분배할 때, 주행 상태와 배터리 상태를 함께 고려해 우선순위를 동적으로 조정하는 방법에 관한 특허입니다.</p>
+              <h2>우리 개발안과의 관련성</h2>
+              <ul>
+                <li>전력 분배 우선순위 산정 로직이 유사할 가능성이 있습니다.</li>
+                <li>청구항의 상태 변수와 우리 제어 파라미터를 1:1로 비교해야 합니다.</li>
+              </ul>
+              <h2>다음 확인 사항</h2>
+              <p>등록 여부와 독립항 범위를 확인한 뒤, 제어 알고리즘의 입력값과 출력값이 겹치는지 검토합니다.</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script>
+    const samples = {
+      "8426171085343": {
+        country: "CN", title: "Vehicle power distribution method and related equipment", classifier: "전력제어", ipc: "H02J 3/00",
+        applicant: "Huawei Technologies Co., Ltd.", inventor: "Li Wei 외 3인", date: "2024-01-12", pub: "CN117812345A",
+        category: "HW", grade: "s", comment: "HW 관점에서 전원 분배 로직 비교 필요. 청구항 1, 4 우선 검토.",
+        summary: "차량 내 여러 전장 부하에 전력을 분배할 때, 주행 상태와 배터리 상태를 함께 고려해 우선순위를 동적으로 조정하는 방법에 관한 특허입니다."
+      },
+      "KR1020240034512": {
+        country: "KR", title: "3차원 적층 NAND 플래시 메모리 셀 구조 및 제조 방법", classifier: "반도체", ipc: "H10B 43/27",
+        applicant: "SK하이닉스(주)", inventor: "김도은 외 5인", date: "2024-02-28", pub: "KR20240090512",
+        category: "SW", grade: "a", comment: "펌웨어 제어보다는 구조/공정 중심. 채택 가능성만 보조 검토.",
+        summary: "3차원 NAND 셀의 적층 구조와 제조 순서를 개선해 셀 간 간섭을 줄이는 기술입니다."
+      },
+      "US20240245612A1": {
+        country: "US", title: "Hybrid bonding process for chiplet integration", classifier: "패키징", ipc: "H01L 24/29",
+        applicant: "TSMC", inventor: "Wu Chen-Hua 외 2인", date: "2024-02-09", pub: "US20240245612",
+        category: "MEC", grade: "b", comment: "기계적 정렬 구조는 참고 가능. 현재 개발안과 직접 충돌 낮음.",
+        summary: "칩렛 통합을 위한 하이브리드 본딩 공정에서 정렬 오차와 접합 품질을 개선하는 기술입니다."
+      },
+      "JP2024043301A": {
+        country: "JP", title: "Display module cooling structure for vehicle cockpit", classifier: "디스플레이", ipc: "B60R 11/02",
+        applicant: "Denso Corporation", inventor: "Sato Ken 외 1인", date: "2024-03-05", pub: "JP2024043301",
+        category: "SYS", grade: "s", comment: "시스템 레이아웃과 냉각 경로가 유사. 상세 도면 비교 필요.",
+        summary: "차량 콕핏 디스플레이 모듈의 발열을 줄이기 위해 하우징과 공기 흐름 경로를 설계하는 기술입니다."
+      },
+      "EP4312210A1": {
+        country: "EP", title: "Battery management system with predictive thermal control", classifier: "배터리", ipc: "H01M 10/48",
+        applicant: "Bosch GmbH", inventor: "Müller Anna 외 4인", date: "2024-04-18", pub: "EP4312210",
+        category: "", grade: "", comment: "",
+        summary: "배터리 온도 변화를 예측해 냉각 제어를 선제적으로 수행하는 BMS 관련 기술입니다."
+      }
+    };
+
+    const listView = document.getElementById("listView");
+    const detailView = document.getElementById("detailView");
+    const fields = {
+      title: document.getElementById("detailTitle"),
+      key: document.getElementById("detailKey"),
+      country: document.getElementById("detailCountry"),
+      classifier: document.getElementById("detailClassifier"),
+      ipc: document.getElementById("detailIpc"),
+      applicant: document.getElementById("detailApplicant"),
+      inventor: document.getElementById("detailInventor"),
+      date: document.getElementById("detailDate"),
+      pub: document.getElementById("detailPub"),
+      comment: document.getElementById("detailComment"),
+      summary: document.getElementById("detailSummary")
+    };
+
+    function showDetail(key) {
+      const p = samples[key];
+      if (!p) return;
+      fields.title.textContent = p.title;
+      fields.key.textContent = key;
+      fields.country.textContent = p.country;
+      fields.classifier.textContent = p.classifier;
+      fields.ipc.textContent = p.ipc;
+      fields.applicant.textContent = p.applicant;
+      fields.inventor.textContent = p.inventor;
+      fields.date.textContent = p.date;
+      fields.pub.textContent = p.pub;
+      fields.comment.value = p.comment;
+      fields.summary.innerHTML = `
+        <h2>검토 요약</h2>
+        <p>${p.summary}</p>
+        <h2>우리 개발안과의 관련성</h2>
+        <ul><li>1차 분류는 ${p.category || "미분류"} 상태로 표시됩니다.</li><li>2차 등급은 ${p.grade ? p.grade.toUpperCase() + "등급" : "미검토"} 상태입니다.</li></ul>
+        <h2>다음 확인 사항</h2>
+        <p>청구항과 개발안의 구성요소를 비교하고, 필요 시 회피 설계 포인트를 메모합니다.</p>
+      `;
+      document.querySelectorAll("[data-detail-nav]").forEach(el => el.classList.toggle("active", el.dataset.detailNav === key));
+      document.querySelectorAll("[data-cat]").forEach(btn => btn.classList.toggle("on", !!p.category && btn.dataset.cat === p.category));
+      document.querySelectorAll("[data-grade]").forEach(btn => {
+        btn.classList.toggle("on", !!p.grade && btn.dataset.grade === p.grade);
+        btn.classList.toggle("s", p.grade === "s" && btn.dataset.grade === "s");
+        btn.classList.toggle("a", p.grade === "a" && btn.dataset.grade === "a");
+        btn.classList.toggle("b", p.grade === "b" && btn.dataset.grade === "b");
+      });
+      listView.classList.add("hidden");
+      detailView.classList.add("on");
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+
+    document.querySelectorAll("[data-detail]").forEach(row => {
+      row.addEventListener("click", () => showDetail(row.dataset.detail));
+    });
+    document.querySelectorAll("[data-detail-nav]").forEach(card => {
+      card.addEventListener("click", () => showDetail(card.dataset.detailNav));
+    });
+    document.getElementById("backToList").addEventListener("click", () => {
+      detailView.classList.remove("on");
+      listView.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  </script>
+</body>
+</html>

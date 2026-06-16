@@ -42,6 +42,7 @@ export function PatentsShell({ patents, children }: { patents: PatentView[]; chi
         return {
           ...p,
           reviewStatus: local.reviewStatus ?? p.reviewStatus,
+          reviewCategory: local.reviewCategory ?? p.reviewCategory,
           reviewer: local.reviewer ?? p.reviewer,
           reviewDate: local.reviewDate ?? p.reviewDate,
           excluded: local.excluded || p.excluded,

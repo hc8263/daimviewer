@@ -17,6 +17,7 @@ export type PatentView = {
   pubDate: string;
   ipc: string;
   classifier: string;
+  reviewCategory?: string | null;
   majorCategory?: string | null;
   middleCategory?: string | null;
   reviewStatus: string | null;
@@ -45,6 +46,7 @@ function toDateStr(v: unknown): string {
 
 type RowExt = PatentRow & {
   decision?: string | null;
+  review_category?: string | null;
   reviewer?: string | null;
   review_date?: string | null;
   note?: string | null;
@@ -65,6 +67,7 @@ function rowToView(r: RowExt): PatentView {
     pubDate: r.publication_no || "",
     ipc: r.ipc_main || "",
     classifier: r.status || "",
+    reviewCategory: r.review_category || null,
     majorCategory: (r as any).major_category ?? null,
     middleCategory: (r as any).middle_category ?? null,
     reviewStatus: r.decision || null,
@@ -103,12 +106,12 @@ export async function listPatents(opts?: { includeExcluded?: boolean }): Promise
              null::text as description, null::text as description_ko,
              null::text as summary_md, p.admin_note,
              (p.created_at > now() - interval '7 days') as is_new,
-             r.decision, r.reviewer,
+             r.decision, r.review_category, r.reviewer,
              to_char(r.updated_at, 'YYYY-MM-DD') as review_date,
              r.note, coalesce(r.excluded, false) as excluded
         from patents p
         left join lateral (
-          select decision, reviewer, updated_at, note, excluded
+          select decision, review_category, reviewer, updated_at, note, excluded
             from reviews
            where reviews.wipson_key = p.wipson_key
            order by updated_at desc
@@ -132,12 +135,12 @@ export async function getPatent(wipsonKey: string): Promise<PatentView | null> {
   }
   try {
     const rows = (await sql`
-      select p.*, r.decision, r.reviewer,
+      select p.*, r.decision, r.review_category, r.reviewer,
              to_char(r.updated_at, 'YYYY-MM-DD') as review_date,
              r.note, coalesce(r.excluded, false) as excluded
         from patents p
         left join lateral (
-          select decision, reviewer, updated_at, note, excluded
+          select decision, review_category, reviewer, updated_at, note, excluded
             from reviews
            where reviews.wipson_key = p.wipson_key
            order by updated_at desc

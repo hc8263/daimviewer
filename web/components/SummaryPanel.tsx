@@ -3,6 +3,7 @@ import React from "react";
 import { PRIcon, FlagBadge } from "./icons";
 import { renderMarkdown } from "./markdown";
 import type { PatentView } from "@/lib/patents";
+import { DECISION_DESCRIPTION, REVIEW_CATEGORIES } from "@/lib/review";
 
 function TranslationSection({ descriptionKo, hasOriginal }: { descriptionKo: string | null; hasOriginal: boolean }) {
   const [open, setOpen] = React.useState(false);
@@ -39,13 +40,18 @@ function TranslationSection({ descriptionKo, hasOriginal }: { descriptionKo: str
   );
 }
 
-function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initial: string | null; onSaved: (note: string) => void }) {
+function CommentBox({ wipsonKey, reviewer, initial, onSaved }: { wipsonKey: string; reviewer: string; initial: string | null; onSaved: (note: string) => void }) {
   const [value, setValue] = React.useState(initial ?? "");
-  const [status, setStatus] = React.useState<"idle" | "saving" | "saved">("idle");
+  const [status, setStatus] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSaved = React.useRef<string>(initial ?? "");
+  const focused = React.useRef(false);
+  const prevKey = React.useRef(wipsonKey);
 
   React.useEffect(() => {
+    const samePatent = prevKey.current === wipsonKey;
+    prevKey.current = wipsonKey;
+    if (focused.current && samePatent) return;
     setValue(initial ?? "");
     lastSaved.current = initial ?? "";
     setStatus("idle");
@@ -58,10 +64,10 @@ function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initia
       const res = await fetch("/api/review", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wipsonKey, reviewer: "USER", note: next }),
+        body: JSON.stringify({ wipsonKey, reviewer, note: next }),
       });
       if (!res.ok) {
-        setStatus("idle");
+        setStatus("error");
         return;
       }
       lastSaved.current = next;
@@ -70,9 +76,9 @@ function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initia
       // shows the saved comment instead of the stale list value.
       onSaved(next);
     } catch {
-      setStatus("idle");
+      setStatus("error");
     }
-  }, [wipsonKey, onSaved]);
+  }, [wipsonKey, reviewer, onSaved]);
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value;
@@ -83,6 +89,7 @@ function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initia
   };
 
   const onBlur = () => {
+    focused.current = false;
     if (timer.current) clearTimeout(timer.current);
     persist(value);
   };
@@ -93,7 +100,7 @@ function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initia
         <PRIcon name="MessageSquare" size={13} />
         <span>코멘트</span>
         <span className="dp-comment-status">
-          {status === "saving" ? "저장 중…" : status === "saved" ? "저장됨" : ""}
+          {status === "saving" ? "저장 중..." : status === "saved" ? "저장됨" : status === "error" ? "저장 실패" : ""}
         </span>
       </div>
       <textarea
@@ -101,6 +108,7 @@ function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initia
         placeholder="이 특허에 대한 코멘트를 남겨주세요"
         value={value}
         onChange={onChange}
+        onFocus={() => { focused.current = true; }}
         onBlur={onBlur}
         rows={2}
       />
@@ -108,12 +116,15 @@ function CommentBox({ wipsonKey, initial, onSaved }: { wipsonKey: string; initia
   );
 }
 
-export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDecision, setComment }: {
+export function SummaryPanel({ patent, summaryMd, easySummaryMd, reviewer, decision, reviewCategory, setDecision, setReviewCategory, setComment }: {
   patent: PatentView;
   summaryMd: string;
   easySummaryMd?: string | null;
+  reviewer: string;
   decision: string | null;
+  reviewCategory: string | null;
   setDecision: (d: string | null) => void;
+  setReviewCategory: (category: string | null) => void;
   setComment: (note: string) => void;
 }) {
   const [viewMode, setViewMode] = React.useState<"easy" | "spec">("easy");
@@ -125,7 +136,21 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
       await fetch("/api/review", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wipsonKey: patent.wipsonKey, decision: next, reviewer: "USER" }),
+        body: JSON.stringify({ wipsonKey: patent.wipsonKey, decision: next, reviewer }),
+      });
+    } catch {
+      /* offline / no DB — ignore */
+    }
+  };
+
+  const saveCategory = async (category: string) => {
+    const next = reviewCategory === category ? null : category;
+    setReviewCategory(next);
+    try {
+      await fetch("/api/review", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wipsonKey: patent.wipsonKey, reviewCategory: next, reviewer }),
       });
     } catch {
       /* offline / no DB — ignore */
@@ -171,14 +196,23 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
             </span>
           )}
           <div style={{ flex: 1 }} />
+          <div className="dp-review-categories" aria-label="1차 분류">
+            <span className="dp-control-label">1차</span>
+            {REVIEW_CATEGORIES.map((category) => (
+              <button key={category} className={reviewCategory === category ? "on" : ""} onClick={() => saveCategory(category)}>
+                {category}
+              </button>
+            ))}
+            {!reviewCategory && <span className="dp-unclassified">미분류</span>}
+          </div>
           <div className="dp-decisions">
-            <button className={`${decision === "relevant" ? "on relevant" : ""}`} onClick={() => save("relevant")}>
+            <button className={`${decision === "relevant" ? "on relevant" : ""}`} onClick={() => save("relevant")} title={DECISION_DESCRIPTION.relevant}>
               <PRIcon name="CheckCircle" size={13} color={decision === "relevant" ? "#0066FF" : "currentColor"} />S등급
             </button>
-            <button className={`${decision === "maybe" ? "on maybe" : ""}`} onClick={() => save("maybe")}>
+            <button className={`${decision === "maybe" ? "on maybe" : ""}`} onClick={() => save("maybe")} title={DECISION_DESCRIPTION.maybe}>
               <PRIcon name="HelpCircle" size={13} color={decision === "maybe" ? "#FF9200" : "currentColor"} />A등급
             </button>
-            <button className={`${decision === "irrelevant" ? "on irrelevant" : ""}`} onClick={() => save("irrelevant")}>
+            <button className={`${decision === "irrelevant" ? "on irrelevant" : ""}`} onClick={() => save("irrelevant")} title={DECISION_DESCRIPTION.irrelevant}>
               <PRIcon name="XCircle" size={13} color={decision === "irrelevant" ? "#46474C" : "currentColor"} />B등급
             </button>
           </div>
@@ -195,7 +229,7 @@ export function SummaryPanel({ patent, summaryMd, easySummaryMd, decision, setDe
 
       <div className="dp-body">
         <div className="dp-body-inner">
-          <CommentBox wipsonKey={patent.wipsonKey} initial={patent.comment} onSaved={setComment} />
+          <CommentBox wipsonKey={patent.wipsonKey} reviewer={reviewer} initial={patent.comment} onSaved={setComment} />
           {viewMode === "easy" ? (
             easySummaryMd ? (
               <>

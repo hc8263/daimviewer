@@ -49,12 +49,31 @@ create table if not exists reviews (
   wipson_key    text references patents(wipson_key) on delete cascade,
   reviewer      text not null,
   decision      text,
+  review_category text,
   note          text,
   excluded      boolean default false,
   updated_at    timestamptz default now(),
   primary key (wipson_key, reviewer)
 );
 alter table reviews add column if not exists excluded boolean default false;
+alter table reviews add column if not exists review_category text;
+
+-- 기본 검토 계정. 초기 비밀번호는 1이며, account API에서 변경 가능.
+create table if not exists reviewer_accounts (
+  reviewer      text primary key,
+  password      text not null,
+  updated_at    timestamptz default now()
+);
+insert into reviewer_accounts (reviewer, password)
+values ('HW', '1'), ('SW', '1'), ('MEC', '1'), ('SYS', '1'), ('TEST', '1')
+on conflict (reviewer) do nothing;
+update reviewer_accounts
+   set password = '1', updated_at = now()
+ where (reviewer = 'HW' and password = 'HW')
+    or (reviewer = 'SW' and password = 'SW')
+    or (reviewer = 'MEC' and password = 'MEC')
+    or (reviewer = 'SYS' and password = 'SYS')
+    or (reviewer = 'TEST' and password = 'TEST');
 
 -- 챗봇 대화 로그
 create table if not exists chat_messages (

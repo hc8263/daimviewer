@@ -4,11 +4,26 @@ import { useRouter } from "next/navigation";
 import { TopBar } from "./TopBar";
 import { PRIcon, FlagBadge, StatusPill } from "./icons";
 import type { PatentView } from "@/lib/patents";
+import { REVIEW_CATEGORIES, isReviewer } from "@/lib/review";
 
 export function PatentList({ patents }: { patents: PatentView[] }) {
   const router = useRouter();
   const [items, setItems] = React.useState<PatentView[]>(patents);
+  const [reviewer, setReviewer] = React.useState("HW");
   React.useEffect(() => setItems(patents), [patents]);
+  React.useEffect(() => {
+    const read = () => {
+      const stored = localStorage.getItem("pr.reviewer");
+      setReviewer(isReviewer(stored) ? stored : "HW");
+    };
+    read();
+    const onReviewer = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (isReviewer(detail)) setReviewer(detail);
+    };
+    window.addEventListener("pr:reviewer", onReviewer);
+    return () => window.removeEventListener("pr:reviewer", onReviewer);
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -41,8 +56,8 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
     };
   }, []);
 
-  const [filter, setFilter] = React.useState<{ status: string | null; classifier: string | null; reviewer: string | null; country: string | null; excluded: boolean; newOnly: boolean }>({
-    status: null, classifier: null, reviewer: null, country: null, excluded: false, newOnly: false,
+  const [filter, setFilter] = React.useState<{ status: string | null; reviewCategory: string | null; reviewer: string | null; country: string | null; excluded: boolean; newOnly: boolean }>({
+    status: null, reviewCategory: null, reviewer: null, country: null, excluded: false, newOnly: false,
   });
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [sort, setSort] = React.useState({ col: "appDate" as keyof PatentView, dir: "desc" as "asc" | "desc" });
@@ -60,12 +75,17 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
   };
   const excludedCount = items.filter((p) => p.excluded).length;
   const newCount = pool.filter((p) => p.isNew).length;
+  const categoryStats = Object.fromEntries(
+    REVIEW_CATEGORIES.map((category) => [category, pool.filter((p) => p.reviewCategory === category).length]),
+  ) as Record<string, number>;
+  const uncategorizedCount = pool.filter((p) => !p.reviewCategory).length;
 
   let rows = pool;
   if (filter.newOnly) rows = rows.filter((p) => p.isNew);
   if (filter.status === "unreviewed") rows = rows.filter((p) => !p.reviewStatus);
   else if (filter.status) rows = rows.filter((p) => p.reviewStatus === filter.status);
-  if (filter.classifier) rows = rows.filter((p) => p.classifier === filter.classifier);
+  if (filter.reviewCategory === "unclassified") rows = rows.filter((p) => !p.reviewCategory);
+  else if (filter.reviewCategory) rows = rows.filter((p) => p.reviewCategory === filter.reviewCategory);
   if (filter.reviewer) rows = rows.filter((p) => p.reviewer === filter.reviewer);
   if (filter.country) rows = rows.filter((p) => p.country === filter.country);
   if (query.trim()) {
@@ -120,7 +140,7 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
       await fetch("/api/review", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wipsonKeys: keys, excluded, reviewer: "USER" }),
+        body: JSON.stringify({ wipsonKeys: keys, excluded, reviewer }),
       });
     } catch {
       /* offline — ignore */
@@ -162,7 +182,22 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
       <div className="lp-shell">
         <aside className="lp-rail">
           <div className="section">
-            <div className="section-h">검토 상태</div>
+            <div className="section-h">1차 분류</div>
+            <div className={`nav-item ${!filter.excluded && filter.reviewCategory === null ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, reviewCategory: null, excluded: false }))}>
+              <PRIcon name="Filter" size={14} color="var(--pr-fg-muted)" />전체<span className="count">{total}</span>
+            </div>
+            <div className={`nav-item ${!filter.excluded && filter.reviewCategory === "unclassified" ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, reviewCategory: f.reviewCategory === "unclassified" ? null : "unclassified", excluded: false }))}>
+              <PRIcon name="Circle" size={14} color="var(--pr-fg-faint)" />미분류<span className="count">{uncategorizedCount}</span>
+            </div>
+            {REVIEW_CATEGORIES.map((category) => (
+              <div key={category} className={`nav-item ${!filter.excluded && filter.reviewCategory === category ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, reviewCategory: f.reviewCategory === category ? null : category, excluded: false }))}>
+                <PRIcon name="Bookmark" size={14} color="var(--pr-fg-muted)" />{category}<span className="count">{categoryStats[category]}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="section">
+            <div className="section-h">2차 등급</div>
             <div className={`nav-item ${!filter.excluded && !filter.newOnly && filter.status === null ? "active" : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null, excluded: false, newOnly: false }))}>
               <PRIcon name="Circle" size={14} color="var(--pr-fg-muted)" />전체<span className="count">{total}</span>
             </div>
@@ -258,6 +293,7 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
                 <col style={{ width: 95 }} />
                 <col style={{ width: 95 }} />
                 <col style={{ width: 95 }} />
+                <col style={{ width: 95 }} />
               </colgroup>
               <thead>
                 <tr>
@@ -273,8 +309,9 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
                   <th>분류</th>
                   <th><span className="sortable">출원일 <PRIcon name="ChevronDown" size={10} /></span></th>
                   <th>공개번호</th>
+                  <th>1차분류</th>
                   <th>검토자</th>
-                  <th>상태</th>
+                  <th>2차등급</th>
                   <th>검토일</th>
                 </tr>
               </thead>
@@ -300,6 +337,7 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
                     <td><span className="pr-tag">{p.classifier}</span></td>
                     <td className="mono" style={{ color: "var(--pr-fg-muted)" }}>{p.appDate}</td>
                     <td className="mono" style={{ color: "var(--pr-fg-muted)" }}>{p.pubDate}</td>
+                    <td>{p.reviewCategory ? <span className="pr-tag pr-tag-primary">{p.reviewCategory}</span> : <span style={{ color: "var(--pr-fg-faint)" }}>미분류</span>}</td>
                     <td>{p.reviewer || <span style={{ color: "var(--pr-fg-faint)" }}>—</span>}</td>
                     <td><StatusPill status={p.reviewStatus} /></td>
                     <td className="mono" style={{ color: "var(--pr-fg-muted)" }}>{p.reviewDate || <span style={{ color: "var(--pr-fg-faint)" }}>—</span>}</td>

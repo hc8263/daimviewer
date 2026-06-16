@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { PRIcon } from "./icons";
+import { REVIEWERS, isReviewer } from "@/lib/review";
 
 export type Crumb = string | { label: string; href: string };
 
@@ -29,6 +30,70 @@ function ThemeToggle() {
     >
       <PRIcon name={isDark ? "Sun" : "Moon"} size={16} />
     </button>
+  );
+}
+
+function ReviewerSelect() {
+  const [reviewer, setReviewer] = React.useState("HW");
+  React.useEffect(() => {
+    const stored = localStorage.getItem("pr.reviewer");
+    if (isReviewer(stored)) setReviewer(stored);
+  }, []);
+  const applyReviewer = (next: string) => {
+    if (!isReviewer(next)) return;
+    setReviewer(next);
+    localStorage.setItem("pr.reviewer", next);
+    window.dispatchEvent(new CustomEvent("pr:reviewer", { detail: next }));
+  };
+  const onChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = e.target.value;
+    if (!isReviewer(next) || next === reviewer) return;
+    const password = window.prompt(`${next} 계정 비밀번호`);
+    if (password == null) {
+      e.target.value = reviewer;
+      return;
+    }
+    const res = await fetch("/api/account", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reviewer: next, password }),
+    });
+    if (!res.ok) {
+      alert("비밀번호가 일치하지 않습니다.");
+      e.target.value = reviewer;
+      return;
+    }
+    applyReviewer(next);
+  };
+  const changePassword = async () => {
+    const password = window.prompt(`${reviewer} 현재 비밀번호`);
+    if (password == null) return;
+    const nextPassword = window.prompt(`${reviewer} 새 비밀번호`);
+    if (nextPassword == null) return;
+    const res = await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reviewer, password, nextPassword }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      alert(data?.error || "비밀번호 변경 실패");
+      return;
+    }
+    alert("비밀번호가 변경되었습니다.");
+  };
+  return (
+    <div className="pr-reviewer-control">
+      <label className="pr-reviewer-select">
+        <span>계정</span>
+        <select value={reviewer} onChange={onChange} aria-label="검토 계정">
+          {REVIEWERS.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </label>
+      <button type="button" className="pr-iconbtn" onClick={changePassword} title="비밀번호 변경" aria-label="비밀번호 변경">
+        <PRIcon name="Lock" size={15} />
+      </button>
+    </div>
   );
 }
 
@@ -64,9 +129,7 @@ export function TopBar({ crumbs = [], rightExtra = null }: {
       <div className="spacer" />
       {rightExtra}
       <ThemeToggle />
-      <span className="pr-userchip">
-        USER
-      </span>
+      <ReviewerSelect />
       <Link href="/admin" className="pr-iconbtn" title="관리자 모드" aria-label="관리자 모드">
         <PRIcon name="Settings" size={16} />
       </Link>
