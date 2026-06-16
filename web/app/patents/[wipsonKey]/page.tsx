@@ -2,10 +2,9 @@ import { notFound } from "next/navigation";
 import { getPatent, resolveSummary, getEasySummary } from "@/lib/patents";
 import { PatentDetailContent } from "@/components/PatentDetailContent";
 
-// Detail pages include review state and claim text that may be backfilled after
-// deployment, so fetch them on each request instead of serving stale ISR output.
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Patent content is stable after ingestion; cache the heavy detail payload.
+// Review comments and decisions are refreshed by the parent layout/list query.
+export const revalidate = 86400;
 
 export default async function Page({ params }: { params: Promise<{ wipsonKey: string }> }) {
   const { wipsonKey } = await params;

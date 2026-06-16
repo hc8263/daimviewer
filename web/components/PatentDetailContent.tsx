@@ -53,12 +53,12 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
     };
   }, [items, patent]);
 
-  const [decision, setDecisionState] = React.useState<string | null>(patent.reviewStatus);
-  const [reviewCategory, setReviewCategoryState] = React.useState<string | null>(patent.reviewCategory ?? null);
+  const [decision, setDecisionState] = React.useState<string | null>(activePatent.reviewStatus);
+  const [reviewCategory, setReviewCategoryState] = React.useState<string | null>(activePatent.reviewCategory ?? null);
   React.useEffect(() => {
-    setDecisionState(patent.reviewStatus);
-    setReviewCategoryState(patent.reviewCategory ?? null);
-  }, [patent.wipsonKey, patent.reviewStatus, patent.reviewCategory]);
+    setDecisionState(activePatent.reviewStatus);
+    setReviewCategoryState(activePatent.reviewCategory ?? null);
+  }, [patent.wipsonKey, activePatent.reviewStatus, activePatent.reviewCategory]);
 
   const setDecision = React.useCallback((d: string | null) => {
     setDecisionState(d);
