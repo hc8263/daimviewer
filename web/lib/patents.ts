@@ -136,8 +136,18 @@ export async function getPatent(wipsonKey: string): Promise<PatentView | null> {
     return MOCK_PATENTS.find(p => p.wipsonKey === wipsonKey) || null;
   }
   try {
+    // Explicit column list (NOT p.*): skip easy_summary_md — it is large markdown
+    // that this view never maps and that getEasySummary fetches separately, so
+    // p.* would transfer it twice per detail render. Cutting it (and seq/created_at)
+    // reduces Neon egress, which is quota-capped on the Free plan.
     const rows = (await sql`
-      select p.*, r.decision, r.review_category, r.reviewer,
+      select p.wipson_key, p.country, p.title, p.title_ko,
+             p.application_no, p.application_date, p.publication_no,
+             p.registration_no, p.applicants, p.inventors,
+             p.ipc_main, p.status, p.major_category, p.middle_category,
+             p.source_url, p.pdf_url, p.pdf_filename, p.admin_note,
+             p.description, p.description_ko, p.claim_text, p.summary_md,
+             r.decision, r.review_category, r.reviewer,
              to_char(r.updated_at, 'YYYY-MM-DD') as review_date,
              r.note, coalesce(r.excluded, false) as excluded
         from patents p
@@ -157,6 +167,31 @@ export async function getPatent(wipsonKey: string): Promise<PatentView | null> {
     return v;
   } catch (err) {
     console.warn("[patents] DB query failed:", err);
+    return MOCK_PATENTS.find(p => p.wipsonKey === wipsonKey) || null;
+  }
+}
+
+// Chat invokes this on EVERY turn and is not cached, so it dominates egress.
+// Fetch only what buildSystem() needs: metadata + summary + a single body column
+// (coalesce avoids transferring both description and description_ko), and skip
+// claim_text / easy_summary_md entirely.
+export async function getPatentForChat(wipsonKey: string): Promise<PatentView | null> {
+  if (!hasDb || !sql) {
+    return MOCK_PATENTS.find(p => p.wipsonKey === wipsonKey) || null;
+  }
+  try {
+    const rows = (await sql`
+      select wipson_key, title, title_ko, applicants, ipc_main, summary_md,
+             coalesce(description, description_ko) as description,
+             null::text as description_ko
+        from patents
+       where wipson_key = ${wipsonKey}
+       limit 1
+    `) as unknown as RowExt[];
+    if (!rows.length) return null;
+    return rowToView(rows[0]);
+  } catch (err) {
+    console.warn("[patents] chat patent query failed:", err);
     return MOCK_PATENTS.find(p => p.wipsonKey === wipsonKey) || null;
   }
 }

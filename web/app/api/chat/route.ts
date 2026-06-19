@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { streamText, type ModelMessage } from "ai";
-import { getPatent, resolveSummary } from "@/lib/patents";
+import { getPatentForChat, resolveSummary } from "@/lib/patents";
 import { sql } from "@/lib/db";
 import { DEFAULT_CHAT_MODEL, isChatModel } from "@/lib/chatModels";
 import { isReviewer } from "@/lib/review";
@@ -24,7 +24,7 @@ async function logMessage(wipsonKey: string, reviewer: string, role: "user" | "a
 // the END of the description (least likely to hold core claims).
 const MAX_CONTEXT_CHARS = 600_000;
 
-function buildSystem(p: Awaited<ReturnType<typeof getPatent>>, summaryMd: string) {
+function buildSystem(p: Awaited<ReturnType<typeof getPatentForChat>>, summaryMd: string) {
   // 원문(description)을 적재하지 않은 특허(주로 비-KR)는 한글 번역본을 근거로 사용
   let description = p?.description || p?.descriptionKo || "";
   if (description.length > MAX_CONTEXT_CHARS) {
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   const model = isChatModel(requestedModel) ? requestedModel : DEFAULT_CHAT_MODEL;
   const reviewer = isReviewer(requestedReviewer) ? requestedReviewer : "HW";
 
-  const patent = await getPatent(wipsonKey);
+  const patent = await getPatentForChat(wipsonKey);
   if (!patent) return new Response("patent not found", { status: 404 });
 
   // Persist the new user turn before invoking the model. We assume the client
