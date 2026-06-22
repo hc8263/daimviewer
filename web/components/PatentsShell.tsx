@@ -26,6 +26,7 @@ export function PatentsShell({ patents, children }: { patents: PatentView[]; chi
   // Local mutable copy — preserved across patent navigations because this
   // client component is mounted by the persistent layout, not by the page.
   const [items, setItems] = React.useState<PatentView[]>(patents);
+  const localPatches = React.useRef<Record<string, Partial<PatentView>>>({});
 
   // If the server-cached list reference changes (revalidation), merge new
   // server data while keeping local decision/excluded edits that may already
@@ -38,21 +39,22 @@ export function PatentsShell({ patents, children }: { patents: PatentView[]; chi
       const byKey = new Map(prev.map((p) => [p.wipsonKey, p] as const));
       return patents.map((p) => {
         const local = byKey.get(p.wipsonKey);
-        if (!local) return p;
+        const patch = localPatches.current[p.wipsonKey];
+        if (!local && !patch) return p;
         return {
           ...p,
-          reviewStatus: local.reviewStatus ?? p.reviewStatus,
-          reviewCategory: local.reviewCategory ?? p.reviewCategory,
-          reviewer: local.reviewer ?? p.reviewer,
-          reviewDate: local.reviewDate ?? p.reviewDate,
-          excluded: local.excluded || p.excluded,
-          comment: local.comment ?? p.comment,
+          reviewer: local?.reviewer ?? p.reviewer,
+          reviewDate: local?.reviewDate ?? p.reviewDate,
+          excluded: local?.excluded || p.excluded,
+          comment: local?.comment ?? p.comment,
+          ...patch,
         };
       });
     });
   }, [patents]);
 
   const updateLocal = React.useCallback((key: string, patch: Partial<PatentView>) => {
+    localPatches.current[key] = { ...(localPatches.current[key] || {}), ...patch };
     setItems((prev) => prev.map((p) => (p.wipsonKey === key ? { ...p, ...patch } : p)));
   }, []);
 

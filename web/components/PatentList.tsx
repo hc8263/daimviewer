@@ -12,6 +12,15 @@ export function PatentList({ patents }: { patents: PatentView[] }) {
   const [reviewer, setReviewer] = React.useState("HW");
   React.useEffect(() => setItems(patents), [patents]);
   React.useEffect(() => {
+    const onPatentUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ wipsonKey?: string; patch?: Partial<PatentView> }>).detail;
+      if (!detail?.wipsonKey || !detail.patch) return;
+      setItems((prev) => prev.map((p) => (p.wipsonKey === detail.wipsonKey ? { ...p, ...detail.patch } : p)));
+    };
+    window.addEventListener("pr:patent-updated", onPatentUpdated);
+    return () => window.removeEventListener("pr:patent-updated", onPatentUpdated);
+  }, []);
+  React.useEffect(() => {
     const read = () => {
       const stored = localStorage.getItem("pr.reviewer");
       setReviewer(isReviewer(stored) ? stored : "HW");

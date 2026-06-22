@@ -22,6 +22,10 @@ function readStored(key: string, fallback: number, min: number, max: number) {
   return clamp(v, min, max);
 }
 
+function broadcastPatentPatch(wipsonKey: string, patch: Partial<PatentView>) {
+  window.dispatchEvent(new CustomEvent("pr:patent-updated", { detail: { wipsonKey, patch } }));
+}
+
 export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { patent: PatentView; summaryMd: string; easySummaryMd?: string | null }) {
   const { items, updateLocal } = usePatents();
   const [reviewer, setReviewer] = React.useState("HW");
@@ -61,25 +65,31 @@ export function PatentDetailContent({ patent, summaryMd, easySummaryMd }: { pate
   }, [patent.wipsonKey, activePatent.reviewStatus, activePatent.reviewCategory]);
 
   const setDecision = React.useCallback((d: string | null) => {
-    setDecisionState(d);
-    updateLocal(patent.wipsonKey, {
+    const patch = {
       reviewStatus: d,
       reviewer: d ? (activePatent.reviewer || reviewer) : null,
       reviewDate: d ? (activePatent.reviewDate || new Date().toISOString().slice(0, 10)) : null,
-    });
+    };
+    setDecisionState(d);
+    updateLocal(patent.wipsonKey, patch);
+    broadcastPatentPatch(patent.wipsonKey, patch);
   }, [patent.wipsonKey, activePatent.reviewer, activePatent.reviewDate, reviewer, updateLocal]);
 
   const setReviewCategory = React.useCallback((category: string | null) => {
-    setReviewCategoryState(category);
-    updateLocal(patent.wipsonKey, {
+    const patch = {
       reviewCategory: category,
       reviewer: category ? (activePatent.reviewer || reviewer) : activePatent.reviewer,
       reviewDate: category ? (activePatent.reviewDate || new Date().toISOString().slice(0, 10)) : activePatent.reviewDate,
-    });
+    };
+    setReviewCategoryState(category);
+    updateLocal(patent.wipsonKey, patch);
+    broadcastPatentPatch(patent.wipsonKey, patch);
   }, [patent.wipsonKey, activePatent.reviewer, activePatent.reviewDate, reviewer, updateLocal]);
 
   const setComment = React.useCallback((note: string) => {
-    updateLocal(patent.wipsonKey, { comment: note });
+    const patch = { comment: note };
+    updateLocal(patent.wipsonKey, patch);
+    broadcastPatentPatch(patent.wipsonKey, patch);
   }, [patent.wipsonKey, updateLocal]);
 
   const [rightW, setRightW] = React.useState(() => readStored("pr.rightW", RIGHT_DEFAULT, RIGHT_MIN, RIGHT_MAX));

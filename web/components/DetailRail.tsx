@@ -18,13 +18,34 @@ export function DetailRail({ active, patents, width = 260 }: {
   const [filter, setFilter] = React.useState<"all" | "unreviewed" | "relevant" | "maybe" | "irrelevant">("all");
   const [query, setQuery] = React.useState("");
   const [page, setPage] = React.useState(1);
+  const [overrides, setOverrides] = React.useState<Record<string, Partial<PatentView>>>({});
   const listRef = React.useRef<HTMLDivElement>(null);
   const prevActiveKeyRef = React.useRef(active.wipsonKey);
 
+  React.useEffect(() => {
+    const onPatentUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ wipsonKey?: string; patch?: Partial<PatentView> }>).detail;
+      if (!detail?.wipsonKey || !detail.patch) return;
+      const key = detail.wipsonKey;
+      const patch = detail.patch;
+      setOverrides((prev) => ({
+        ...prev,
+        [key]: { ...(prev[key] || {}), ...patch },
+      }));
+    };
+    window.addEventListener("pr:patent-updated", onPatentUpdated);
+    return () => window.removeEventListener("pr:patent-updated", onPatentUpdated);
+  }, []);
+
+  const displayPatents = React.useMemo(
+    () => patents.map((p) => (overrides[p.wipsonKey] ? { ...p, ...overrides[p.wipsonKey] } : p)),
+    [patents, overrides],
+  );
+
   const list = React.useMemo(() => {
-    let next = patents;
-    if (filter === "unreviewed") next = patents.filter((p) => !p.reviewStatus);
-    else if (filter !== "all") next = patents.filter((p) => p.reviewStatus === filter);
+    let next = displayPatents;
+    if (filter === "unreviewed") next = displayPatents.filter((p) => !p.reviewStatus);
+    else if (filter !== "all") next = displayPatents.filter((p) => p.reviewStatus === filter);
 
     const q = query.trim().toLowerCase();
     if (q) {
@@ -37,14 +58,14 @@ export function DetailRail({ active, patents, width = 260 }: {
     }
 
     return next;
-  }, [patents, filter, query]);
+  }, [displayPatents, filter, query]);
 
   const pageCount = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   const safePage = clamp(page, 1, pageCount);
   const start = list.length ? (safePage - 1) * PAGE_SIZE : 0;
   const end = Math.min(start + PAGE_SIZE, list.length);
   const pageItems = list.slice(start, end);
-  const reviewed = patents.filter((p) => p.reviewStatus).length;
+  const reviewed = displayPatents.filter((p) => p.reviewStatus).length;
 
   const pageWindow = React.useMemo(() => {
     const pages: Array<number | "ellipsis"> = [];
@@ -93,12 +114,12 @@ export function DetailRail({ active, patents, width = 260 }: {
     <aside className="dp-rail" style={{ width }} suppressHydrationWarning>
       <div className="dp-rail-h">
         <div className="title">
-          <span>검토 중 · {patents.length}건</span>
+          <span>검토 중 · {displayPatents.length}건</span>
         </div>
         <div className="meta">
-          <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--pr-fg-strong)" }}>{reviewed}/{patents.length}</span>
-          <div className="progress"><div style={{ width: `${patents.length ? (reviewed / patents.length) * 100 : 0}%` }} /></div>
-          <span style={{ fontVariantNumeric: "tabular-nums" }}>{patents.length ? Math.round((reviewed / patents.length) * 100) : 0}%</span>
+          <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--pr-fg-strong)" }}>{reviewed}/{displayPatents.length}</span>
+          <div className="progress"><div style={{ width: `${displayPatents.length ? (reviewed / displayPatents.length) * 100 : 0}%` }} /></div>
+          <span style={{ fontVariantNumeric: "tabular-nums" }}>{displayPatents.length ? Math.round((reviewed / displayPatents.length) * 100) : 0}%</span>
         </div>
       </div>
       <div className="dp-rail-search">
