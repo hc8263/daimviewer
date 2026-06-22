@@ -1122,6 +1122,27 @@ button { font: inherit; cursor: pointer; }
 .dp-rail-item .bot {
   display: flex; align-items: center; gap: 6px;
   font-size: 11px; font-weight: 500; color: var(--pr-fg-muted);
+  min-width: 0;
+}
+.dp-rail-category {
+  display: inline-flex;
+  align-items: center;
+  max-width: 96px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--pr-surface-alt);
+  color: var(--pr-fg-faint);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-rail-category.is-set {
+  background: var(--pr-action-bg);
+  color: var(--pr-action);
 }
 
 .dp-rail-pagination {

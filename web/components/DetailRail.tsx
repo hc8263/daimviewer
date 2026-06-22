@@ -145,6 +145,9 @@ export function DetailRail({ active, patents, width = 260 }: {
             <div className="ttl">{p.fileTitle}</div>
             <div className="bot">
               <StatusPill status={p.reviewStatus} />
+              <span className={`dp-rail-category ${p.reviewCategory ? "is-set" : ""}`}>
+                {p.reviewCategory || "미분류"}
+              </span>
               {p.reviewer && <span style={{ color: "var(--pr-fg-faint)" }}>· {p.reviewer}</span>}
             </div>
           </Link>
